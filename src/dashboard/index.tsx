@@ -115,6 +115,7 @@ const SideMenu: React.FunctionComponent<SideMenuProps> = ({
   )
 }
 
+
 const Dashboard = () => {
   const [activePanel, setActivePanel] = useState<string>(DASHBOARD_MENU[0].id)
 
