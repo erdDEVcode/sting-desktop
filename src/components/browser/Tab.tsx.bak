@@ -1,0 +1,82 @@
+// import React, { useState, useCallback, useEffect } from 'react'
+// import styled from '@emotion/styled'
+
+// import { BrowserTabStatus } from '../interfaces'
+// import _ from '../../utils/lodash'
+
+// interface Props {
+//   id: string,
+//   initialUrl: string,
+//   // apiMethods: object,
+//   // permissions: object,
+//   onNewTab: (id: string, url: string) => void,
+//   renderWebView: (a: any) => any
+// }
+
+// const Tab: React.FunctionComponent<Props> = ({ 
+//   initialUrl,
+//   id,
+//   onNewTab,
+//   renderWebView,
+// }) => {
+//   const [status, setStatus] = useState<BrowserTabStatus>(BrowserTabStatus.LOADING)
+//   const [statusMessage, setStatusMessage] = useState<string>('')
+//   const [title, setTitle] = useState<string>(initialUrl)
+//   const [url, setUrl] = useState<string>(initialUrl)
+
+//   const onLoading = useCallback(() => {
+//     setStatus(BrowserTabStatus.LOADING)
+//     setStatusMessage('')
+//   }, [])
+
+//   const onLoaded = useCallback(() => {
+//     setStatus(BrowserTabStatus.LOADED)
+//     setStatusMessage('')
+//   }, [])
+
+//   const onLoadingError = useCallback(({ isMainFrame, errorDescription }) => {
+//     if (isMainFrame) {
+//       setStatus(BrowserTabStatus.ERROR)
+//       setStatusMessage(errorDescription)
+//     }
+//   }, [])
+
+//   const onNewTitle = useCallback(e => {
+//     setTitle(_.get(e, 'target.ownerDocument.title'))
+//   }, [])
+
+//   const onNavigate = useCallback(({ url }) => {
+//     setUrl(url)
+//     setStatus(BrowserTabStatus.LOADING)
+//     setStatusMessage('')
+//   }, [])
+
+//   const onRedirect = useCallback(({ newURL, isMainFrame }) => {
+//     if (isMainFrame) {
+//       onNavigate(newURL)
+//     }
+//   }, [onNavigate])
+
+//   const onNewWindow = useCallback(({ url }) => {
+//     onNewTab(id, url)
+//   }, [onNewTab, id])
+
+//   const onIpcMessage = useCallback(({ channel, args }) => {
+//     console.log(channel, args)
+//   }, [])
+
+//   return (
+//     <React.Fragment>
+//       {renderTab(id, title)}
+//       {render}
+//     </React.Fragment>
+//     <StyledWebView
+//       ref={ref}
+//       src={url} 
+//       preload={`file://${window.preloadBasePath}/browserTab.js`}
+//     />
+//   )
+// }
+
+
+// export default WebView

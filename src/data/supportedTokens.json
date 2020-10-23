@@ -1,0 +1,13 @@
+{
+  "egld": {
+    "symbol": "eGLD",
+    "name": "Elrond Gold",
+    "decimals": 18,
+    "rateApiName": "elrond-erd-2"
+  },
+  "xegld": {
+    "symbol": "XeGLD",
+    "name": "Elrond Gold (Testnet)",
+    "decimals": 18
+  }
+}

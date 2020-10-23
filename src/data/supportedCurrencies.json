@@ -1,0 +1,7 @@
+{
+  "usd": {
+    "rateApiName": "usd",
+    "symbol": "$",
+    "name": "US Dollar"
+  }
+}
