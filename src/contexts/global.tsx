@@ -65,5 +65,6 @@ export const GlobalProvider: React.FunctionComponent = ({ children }) => {
   )
 }
 
+
 export const GlobalConsumer = GlobalContext.Consumer
 
