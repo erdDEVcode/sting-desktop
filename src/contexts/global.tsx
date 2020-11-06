@@ -44,6 +44,13 @@ export const GlobalProvider: React.FunctionComponent = ({ children }) => {
     return r
   }, [ themeName ])
 
+  useEffect(() => {
+    if (!window.inProductionMode) {
+      addWallet(deriveWalletFromMnemonic('start vital describe social kiwi mouse narrow olympic client simple clump ceiling chimney lend page express ordinary gesture pulse sell gap turn expect timber')!)
+      // addWallet(deriveWalletFromMnemonic('fringe dry little minor note hundred lottery garment announce space throw captain seven slim common piece blame battle void pistol diagram melody phone mother')!)
+    }
+  })
+    
   return (
     <GlobalContext.Provider value={{
       experimentalFeaturesEnabled,

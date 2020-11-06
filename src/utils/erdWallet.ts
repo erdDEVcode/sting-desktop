@@ -109,7 +109,7 @@ class LedgerWallet implements Wallet {
 
   constructor (address: string) {
     this._address = address
-    const a = new Elrond.Account()
+    const a = new Elrond.account()
     this._hex = a.hexPublicKeyFromAddress(address)
   }
 
