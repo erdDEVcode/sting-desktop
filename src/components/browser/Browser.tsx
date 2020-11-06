@@ -8,7 +8,7 @@ import {
   StorageConsumer,
   StorageContextValue,
 } from '../../contexts'
-import { Network, Account, Storage } from '../../types/all'
+import { Network, Wallet, Storage } from '../../types/all'
 import { 
   CLOSE_TAB, 
   NEW_TAB, 
@@ -184,13 +184,13 @@ const AddressInput = styled(TextInput)`
 
 interface BrowserPageProps {
   isActive: boolean,
-  activeAccount: Account | undefined,
+  activeWallet: Wallet | undefined,
   network: Network | null,
   storage: Storage,
 }
 
 
-const BrowserPage: React.FunctionComponent<BrowserPageProps> = ({ isActive, activeAccount, network, storage }) => {
+const BrowserPage: React.FunctionComponent<BrowserPageProps> = ({ isActive, activeWallet, network, storage }) => {
   const [ showConfigModal, setShowConfigModal ] = useState(false)
 
   const { 
@@ -211,12 +211,12 @@ const BrowserPage: React.FunctionComponent<BrowserPageProps> = ({ isActive, acti
   ])
 
   const webViewCallHandler = useMemo(() => {
-    if (activeAccount && network && !network.failure) {
-      return new WebViewCallHandler(activeAccount, network, storage)
+    if (activeWallet && network && !network.failure) {
+      return new WebViewCallHandler(activeWallet, network, storage)
     } else {
       return null
     }
-  }, [activeAccount, network, storage])
+  }, [activeWallet, network, storage])
 
   const activeRef = useRef(null)
 
@@ -415,7 +415,7 @@ const BrowserPage: React.FunctionComponent<BrowserPageProps> = ({ isActive, acti
               ref={id === activeTab!.id ? activeRef : null}
               url={url}
               ctx={id}
-              account={activeAccount}
+              wallet={activeWallet}
               network={network}
               onUiTask={onUiTask}
               onLoading={onLoading}
@@ -441,13 +441,13 @@ interface Props {
 const Browser: React.FunctionComponent<Props> = ({ isActive }) => {
   return (
     <GlobalConsumer>
-      {({ network, activeAccount }: GlobalContextValue) => (
+      {({ network, activeWallet }: GlobalContextValue) => (
         <StorageConsumer>
           {(storage: StorageContextValue) => (
             <BrowserPage
               isActive={isActive}
               network={network}
-              activeAccount={activeAccount}
+              activeWallet={activeWallet}
               storage={storage}
             />
           )}

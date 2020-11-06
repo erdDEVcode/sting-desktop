@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
-import { Transaction } from '../../types/all'
+import { Transaction, TransactionOnChain } from '../../types/all'
 import { formatDateIso } from '../../utils/date'
 import { shortenHash } from '../../utils/address'
 
@@ -41,7 +41,7 @@ const Column = styled.div`
 `
 
 interface Props {
-  tx: Transaction
+  tx: TransactionOnChain,
   className?: string,
 }
 
@@ -50,9 +50,6 @@ const TransactionDetails: React.FunctionComponent<Props> = ({ tx, className }) =
 
   return (
     <Container className={className}>
-      <Line>
-        <strong>id:</strong><span>{tx.id}</span>
-      </Line>
       <Line>
         <strong>date:</strong><span>{when}</span>
       </Line>
@@ -65,10 +62,10 @@ const TransactionDetails: React.FunctionComponent<Props> = ({ tx, className }) =
       <Columns>
         <Column>
           <Line>
-            <strong>fromShard:</strong><span>{tx.senderShard}</span>
+            <strong>fromShard:</strong><span>{tx.sourceShard}</span>
           </Line>
           <Line>
-            <strong>toShard:</strong><span>{tx.receiverShard}</span>
+            <strong>toShard:</strong><span>{tx.destinationShard}</span>
           </Line>
           <Line>
             <strong>round:</strong><span>{tx.round}</span>
@@ -85,19 +82,13 @@ const TransactionDetails: React.FunctionComponent<Props> = ({ tx, className }) =
             <strong>gasLimit:</strong><span>{tx.gasLimit}</span>
           </Line>
           <Line>
-            <strong>gasUsed:</strong><span>{tx.gasUsed}</span>
-          </Line>
-          <Line>
-            <strong>miniBlock:</strong><span>{shortenHash(tx.miniBlockHash)}</span>
-          </Line>
-        </Column>
-        <Column>
-          <Line>
             <strong>value:</strong><span>{tx.value}</span>
           </Line>
           <Line>
             <strong>data:</strong><span>{tx.data ? shortenHash(tx.data) : '(empty)'}</span>
           </Line>
+        </Column>
+        <Column>
           <Line>
             <strong>status:</strong><span>{tx.status}</span>
           </Line>

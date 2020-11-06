@@ -8,12 +8,4 @@ export interface NetworkEndpoint {
   delegationContract?: string,
 }
 
-export interface NetworkConfig {
-  version: string,
-  chainId: string,
-  started: Date,
-  gasMinLimit: number,
-  gasMinPrice: number,
-  gasPerDataByte: number,
-}
 

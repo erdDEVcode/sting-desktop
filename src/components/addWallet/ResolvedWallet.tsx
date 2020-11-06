@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from '@emotion/styled'
 
-import { Account } from '../../types/all'
+import { Wallet } from '../../types/all'
 import ValueBox from '../ValueBox'
 
 const Container = styled(ValueBox)`
@@ -21,17 +21,17 @@ const Text = styled.div`
 `
 
 interface Props {
-  account?: Account,
+  wallet?: Wallet,
   className?: string,
 }
 
-const ResolvedAccount: React.FunctionComponent<Props> = ({ account, className }) => {
-  return account ? (
+const ResolvedWallet: React.FunctionComponent<Props> = ({ wallet, className }) => {
+  return wallet ? (
     <Container className={className}>
-      <Text><label>Address:</label> {account.address()}</Text>
+      <Text><label>Address:</label> {wallet.address()}</Text>
     </Container>
   ) : null
 }
 
 
-export default ResolvedAccount
+export default ResolvedWallet

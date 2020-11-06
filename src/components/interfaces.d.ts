@@ -5,6 +5,7 @@ export interface ButtonProps {
   icon?: string,
   title?: string,
   tooltip?: any,
+  state?: string,
 }
 
 

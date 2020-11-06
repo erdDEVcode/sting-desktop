@@ -13,8 +13,7 @@ export enum AssetValueNumberStyle {
 
 interface AssetValueStringOptions {
   numberStyle?: AssetValueNumberStyle,
-  symbolSuffix?: boolean,
-  symbolPrefix?: boolean,
+  showSymbol?: boolean,
 }
 
 const isNotEmpty = (a: any) => a !== null && a !== undefined && a !== ''
@@ -64,6 +63,14 @@ export class AssetValue {
     return this._asset
   }
 
+  lt (val: any): boolean {
+    return this._n.lt(toDec(val))
+  }
+
+  lte (val: any): boolean {
+    return this._n.lte(toDec(val))
+  }
+
   gt (val: any): boolean {
     return this._n.gt(toDec(val))
   }
@@ -93,6 +100,10 @@ export class AssetValue {
       token: this._asset.id,
       amount: this.toString(),
     }
+  }
+
+  toNumber(options: AssetValueStringOptions = {}): number {
+    return parseInt(this.toString({ ...options, showSymbol: false }), 10)
   }
 
   toString(options: AssetValueStringOptions = {}): string {
@@ -141,10 +152,12 @@ export class AssetValue {
   }
 
   _formatString(valueStr: string, asset: TokenAsset, options: AssetValueStringOptions = {}): string {
-    if (options.symbolSuffix) {
-      return `${valueStr} ${asset.symbol}`
-    } else if (options.symbolPrefix) {
-      return `${asset.symbol}${valueStr}`
+    if (options.showSymbol) {
+      if (asset.symbolFormatting) {
+        return asset.symbolFormatting.replace('{symbol}', asset.symbol).replace('{value}', valueStr)
+      } else {
+        return `${valueStr} ${asset.symbol}`
+      }
     } else {
       return valueStr
     }
@@ -154,11 +167,3 @@ export class AssetValue {
 export const isValidGasLimit = (a: any): boolean => isNotEmpty(a) ? new PreciseDecimal(`${a}`).gt(0) : false
 export const isValidGasPrice = (a: any): boolean => isNotEmpty(a) ? new PreciseDecimal(`${a}`).gt(0) : false
 export const isValidValue = (a: any): boolean => isNotEmpty(a) ? new PreciseDecimal(`${a}`).gte(0) : false
-
-export const vmIntValueToHexString = (v: any): string => {
-  if (!v) {
-    v = 'MA=='
-  }
-  
-  return `0x${Buffer.from(v, 'base64').toString('hex')}`
-}

@@ -2,6 +2,7 @@
   "usd": {
     "rateApiName": "usd",
     "symbol": "$",
+    "symbolFormatting": "{symbol}{value}",
     "name": "US Dollar"
   }
 }

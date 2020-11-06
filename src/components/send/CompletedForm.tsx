@@ -5,6 +5,7 @@ import { flex } from 'emotion-styled-utils'
 import ValueBox from '../ValueBox'
 import Button from '../Button'
 import { ViewInExplorerContext, ViewTransactionInExplorer } from '../ViewInExplorer'
+import { DisplayOptions } from './interfaces'
 
 
 const Container = styled.div`
@@ -28,6 +29,7 @@ const NewButton = styled(Button)`
 
 interface Props {
   className?: string,
+  displayOptions?: DisplayOptions,
   onReset: () => void,
   props: any,
 }
@@ -36,13 +38,12 @@ const CompletedForm: React.FunctionComponent<Props> = ({
   className,
   onReset,
   props: {
-    account,
     txId,
   },
 }) => {
   return (
     <Container className={className}>
-      <h2>Your transaction was successfully sent!</h2>
+      <h2>Your transaction is in progress.</h2>
       <TxId>
         <ValueBox>{txId}</ValueBox>
         <ViewTransactionInExplorer id={txId}>

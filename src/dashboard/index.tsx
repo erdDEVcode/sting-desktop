@@ -121,8 +121,8 @@ const Dashboard = () => {
 
   return (
     <GlobalConsumer>
-      {({ activeAccount, experimentalFeaturesEnabled }) => (
-        activeAccount ? (
+      {({ activeWallet, experimentalFeaturesEnabled }) => (
+        activeWallet ? (
           <Container>
             <SideMenu
               activePanel={activePanel}

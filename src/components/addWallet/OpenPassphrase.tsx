@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
-import ResolvedAccount from './ResolvedAccount'
+import ResolvedWallet from './ResolvedWallet'
 import TextArea from '../TextArea'
-import { deriveAccountFromMnemonic } from '../../utils/erdWallet'
+import { deriveWalletFromMnemonic } from '../../utils/erdWallet'
 
 const Container = styled.div`
   ${flex({ direction: 'column', justify: 'center', align: 'center' })}
@@ -15,7 +15,7 @@ const StyledTextArea = styled(TextArea)`
   width: 400px;
 `
 
-const StyledResolvedAccount = styled(ResolvedAccount)`
+const StyledResolvedWallet = styled(ResolvedWallet)`
   margin-top: 2rem;
   max-width: 400px;
 `
@@ -25,20 +25,20 @@ interface Props {
 }
 
 const OpenPassphrase: React.FunctionComponent<Props> = ({ renderSuccess }) => {
-  const [account, setAccount] = useState<any>()
+  const [wallet, setWallet] = useState<any>()
   const [value, setValue] = useState('')
 
   useEffect(() => {
     const checkTimer = setTimeout(() => {
       if (value) {
-        const account = deriveAccountFromMnemonic(value)
-        if (account) {
-          setAccount(account)
+        const wallet = deriveWalletFromMnemonic(value)
+        if (wallet) {
+          setWallet(wallet)
           return
         }
       }
 
-      setAccount(undefined)
+      setWallet(undefined)
     }, 250)
 
     return () => clearTimeout(checkTimer)
@@ -52,8 +52,8 @@ const OpenPassphrase: React.FunctionComponent<Props> = ({ renderSuccess }) => {
         value={value}
         onChange={setValue}
       />
-      <StyledResolvedAccount account={account} />
-      {account ? renderSuccess(account) : null}
+      <StyledResolvedWallet wallet={wallet} />
+      {wallet ? renderSuccess(wallet) : null}
     </Container>
   )
 }

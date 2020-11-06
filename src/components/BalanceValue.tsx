@@ -26,7 +26,7 @@ const Frac = styled.div`
 
   &:before {
     content: '.';
-    margin: 0 0.1em;
+    margin: 0 0.1em;num
   }
 `
 
@@ -47,7 +47,7 @@ const BalanceValue: React.FunctionComponent<Props> = ({ className, balance }) =>
 
       return {
         num,
-        frac: (typeof frac !== 'undefined') ? `1${frac}${frac.length === 1 ? '0' : ''}` : undefined
+        frac: (typeof frac !== 'undefined') ? `1${frac}${frac.length === 1 ? '0' : ''}` : null
       }
     } else {
       return {}

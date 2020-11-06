@@ -18,7 +18,7 @@ const TextSpan = styled(HeaderClickable)`
 `
 
 const StyledIcon = styled(Icon)`
-  color: ${(p: any) => p.theme.accountState.icon.color};
+  color: ${(p: any) => p.theme.walletState.icon.color};
   margin-right: 0.5em;
 `
 
@@ -40,27 +40,27 @@ const Menu = styled.ul`
   display: block;
   position: absolute;
   top: 2rem;
-  left: 0;
+  left: -10rem;
   width: 400px;
-  ${(p: any) => boxShadow({ color: p.theme.accountState.menu.shadowColor })};
+  ${(p: any) => boxShadow({ color: p.theme.walletState.menu.shadowColor })};
   border-radius: 10px;
 `
 
 const itemNormalStyles= (p: any) => `
-  background-color: ${p.theme.accountState.menu.item.bgColor};
-  color: ${p.theme.accountState.menu.item.textColor};
+  background-color: ${p.theme.walletState.menu.item.bgColor};
+  color: ${p.theme.walletState.menu.item.textColor};
 `
 
 const itemSelectedStyles = (p: any) => `
-  background-color: ${p.theme.accountState.menu.item.selected.bgColor};
-  color: ${p.theme.accountState.menu.item.selected.textColor};
+  background-color: ${p.theme.walletState.menu.item.selected.bgColor};
+  color: ${p.theme.walletState.menu.item.selected.textColor};
 `
 
 const MenuItem = styled.li`
   ${flex({ direction: 'row', justify: 'space-between', align: 'center' })};
   ${(p: any) => p.theme.font('header')};
   ${(p: any) => p.active ? itemSelectedStyles(p) : itemNormalStyles(p)};
-  border-bottom: 1px solid ${(p: any) => p.theme.accountState.menu.item.borderColor};
+  border-bottom: 1px solid ${(p: any) => p.theme.walletState.menu.item.borderColor};
   font-size: 1rem;
   padding: 1em;
 
@@ -78,7 +78,7 @@ const ItemAddress = styled(Address)`
 `
 
 
-const AddAccountButton = styled(Button)`
+const AddWalletButton = styled(Button)`
   padding: 0.4em 0.8em;
   font-size: 80%;
 `
@@ -88,10 +88,10 @@ interface Props {
   addNewWallet: () => void,
 }
 
-const AccountStatus: React.FunctionComponent<Props> = ({ className, addNewWallet }) => {
+const WalletStatus: React.FunctionComponent<Props> = ({ className, addNewWallet }) => {
   const [ showMenu, setShowMenu ] = useState(false)
 
-  const toggleAccountMenu = useCallback(() => {
+  const toggleWalletMenu = useCallback(() => {
     setShowMenu(!showMenu)
   }, [ showMenu ])
 
@@ -100,36 +100,36 @@ const AccountStatus: React.FunctionComponent<Props> = ({ className, addNewWallet
     addNewWallet()
   }, [ addNewWallet ])
 
-  const switchToAccount = useCallback((setActiveAccount: Function, a: any) => {
-    setActiveAccount(a)
-    setTimeout(toggleAccountMenu, 100)
-  }, [ toggleAccountMenu ])
+  const switchToWallet = useCallback((setActiveWallet: Function, a: any) => {
+    setActiveWallet(a)
+    setTimeout(toggleWalletMenu, 100)
+  }, [ toggleWalletMenu ])
 
   return (
     <GlobalConsumer>
-      {({ accounts, activeAccount, setActiveAccount }: GlobalContextValue) => (
-        activeAccount ? (
+      {({ wallets, activeWallet, setActiveWallet }: GlobalContextValue) => (
+        activeWallet ? (
           <Container className={className}>
-            <TextSpan onClick={toggleAccountMenu}>
+            <TextSpan onClick={toggleWalletMenu}>
               <StyledIcon name='user' />
-              <Address address={activeAccount.address()} shorten={true} />
+              <Address address={activeWallet.address()} shorten={true} />
               <ArrowIcon name='downChevron' />
             </TextSpan>
             {showMenu ? (
               <React.Fragment>
-                <Overlay onClick={toggleAccountMenu} />
+                <Overlay onClick={toggleWalletMenu} />
                 <Menu>
-                  {accounts.map(a => (
+                  {wallets.map(a => (
                     <MenuItem
                       key={a.address()}
-                      active={a.address() === activeAccount.address()}
+                      active={a.address() === activeWallet.address()}
                     >
-                      <ItemAddress address={a.address()} onClick={() => switchToAccount(setActiveAccount, a)} />
+                      <ItemAddress address={a.address()} onClick={() => switchToWallet(setActiveWallet, a)} />
                       <CopyToClipboardButton value={a.address()} />
                     </MenuItem>
                   ))}
                   <MenuItem key='add'>
-                    <AddAccountButton onClick={showAddModal}>Add account</AddAccountButton>
+                    <AddWalletButton onClick={showAddModal}>Add wallet</AddWalletButton>
                   </MenuItem>
                 </Menu>
               </React.Fragment>
@@ -141,5 +141,5 @@ const AccountStatus: React.FunctionComponent<Props> = ({ className, addNewWallet
   )
 }
 
-export default AccountStatus
+export default WalletStatus
 

@@ -1,3 +1,5 @@
+export * from 'erdor'
+
 export * from './network'
 export * from './transaction'
 export * from './api'
@@ -46,7 +48,7 @@ export interface Network {
   failure?: string,
 }
 
-export interface Account {
+export interface Wallet {
   address: () => string,
   sign: Function,
   isLedger?: boolean,
@@ -54,10 +56,12 @@ export interface Account {
 
 export interface RawTokenAsset {
   symbol: string,
+  symbolFormatting?: string,
   name: string,
   rateApiName?: string,
   rateMultiplier?: number
   decimals?: number,
+  img?: string,
 }
 
 export type RawTokenAssetRecord = Record<string, RawTokenAsset>

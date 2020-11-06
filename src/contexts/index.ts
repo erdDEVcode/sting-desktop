@@ -1,3 +1,5 @@
 export * from './global'
-export * from './account'
+export * from './wallet'
 export * from './storage'
+export * from './chain'
+export * from './notifications'

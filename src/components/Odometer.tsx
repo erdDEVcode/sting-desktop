@@ -10,6 +10,9 @@ const Container = styled.div`
     .odometer-digit:nth-of-type(1) {
       display: none;
     }
+    .odometer-formatting-mark {
+      display: none;
+    }
   ` : ''};
 `
 

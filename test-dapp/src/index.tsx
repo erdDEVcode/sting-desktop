@@ -82,7 +82,7 @@ const App = () => {
   const [delegation, delegationError, setDelegation, setDelegationError] = useResult<any>()
 
   const foundElrondInstance = useMemo(() => {
-    return window.elrond && window.elrond.getProvider
+    return window.elrond && window.elrond.provider
   }, [])
 
   useEffect(() => {
@@ -113,8 +113,7 @@ const App = () => {
 
   const connectWallet = useCallback(() => {
     if (!accountAddress) {
-      window.elrond.requestAccountAccess()
-        .then(() => window.elrond.getAccountAddress())
+      window.elrond.getAccountAddress()
         .then(setAccountAddress)
         .catch(setAccountAddressError)
     }
@@ -126,7 +125,7 @@ const App = () => {
     }
 
     (async () => {
-      const provider = window.elrond.getProvider(erdjs)
+      const provider = window.elrond.provider
 
       const logError = console.error.bind(console)
 
@@ -148,7 +147,7 @@ const App = () => {
       return
     }
 
-    const provider = window.elrond.getProvider(erdjs)
+    const provider = window.elrond.provider
 
     const hex = erdjs.Address.fromBech32(accountAddress).hex()
 
@@ -158,7 +157,7 @@ const App = () => {
   }, [accountAddress, networkConfig, setDelegation, setDelegationError])
 
   const claimRewards = useCallback(async () => {
-    const provider = window.elrond.getProvider(erdjs)
+    const provider = window.elrond.provider
 
     const sc = new erdjs.SmartContract({
       address: erdjs.Address.fromBech32(ADDRESSES.delegationContract)
@@ -188,7 +187,7 @@ const App = () => {
           <RenderValue value={networkId} error={networkIdError} />
         </Row>
         <Row>
-          User's account:
+          User's wallet:
           <RenderValue value={accountAddress} error={accountAddressError} />
         </Row>
         {accountAddress ? (

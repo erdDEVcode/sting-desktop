@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import styled from '@emotion/styled'
 
-import { Account, Balances, Delegation, Rates, NewTransaction, Network } from '../../types/all'
+import { Wallet, Balances, Delegation, Rates, Network, Transaction, Provider } from '../../types/all'
 import {
+  ChainConsumer,
   GlobalConsumer,
   GlobalContextValue,
-  AccountConsumer,
-  AccountContextValue,
+  WalletConsumer,
+  WalletContextValue,
 } from '../../contexts'
 import {
   AssetValue,
@@ -20,7 +21,8 @@ import SlidingPanels from '../SlidingPanels'
 import PreviewForm from './PreviewForm'
 import ConfirmForm from './ConfirmForm'
 import CompletedForm from './CompletedForm'
-import { signAndSendTx } from '../../utils/erdWallet'
+import { signTx } from '../../utils/erdWallet'
+import { DisplayOptions } from './interfaces'
 
 const Container = styled.div`
   background-color: ${(p: any) => p.theme.content.bgColor};
@@ -46,26 +48,30 @@ interface SendInitialValues {
 
 interface SendFormProps {
   network: Network,
-  account: Account,
+  provider: Provider,
+  wallet: Wallet,
   balances: Balances,
   delegation?: Delegation,
   rates: Rates,
   className?: string,
-  onComplete?: () => {},
+  onError?: (err: any) => {},
+  onComplete?: (txHash: string) => {},
   initialValues?: SendInitialValues,
+  displayOptions?: DisplayOptions,
 }
 
 const SendForm: React.FunctionComponent<SendFormProps> = ({
-  className, account, network, balances, rates, initialValues, onComplete,
+  className, provider, wallet, network, balances, rates, initialValues, onComplete, displayOptions,
 }) => {
   const primaryToken = useMemo(() => network.endpoint.primaryToken, [network])
 
   const [ txId, setTxId ] = useState('')
-  const [activePanel, setActivePanel] = useState(0)
+  const [activePanel, setActivePanel] = useState(displayOptions?.skipPreview ? 1 : 0)
   const [toValue, setToValue] = useState('')
   const [dataValue, setDataValue] = useState('')
   const [cryptoValue, setCryptoValue] = useState('')
   const [ fiatValue, setFiatValue ] = useState('')
+  const [valueError, setValueError] = useState('')
   const [gasPriceValue, setGasPriceValue] = useState('')
   const [gasLimitValue, setGasLimitValue] = useState('')
   const [ totalGasValue, setTotalGasValue ] = useState('')
@@ -73,6 +79,17 @@ const SendForm: React.FunctionComponent<SendFormProps> = ({
   const [ totalValue, setTotalValue ] = useState('')
   const [ totalCurrencyValue, setTotalCurrencyValue ] = useState('')
   const [totalError, setTotalError] = useState('')
+
+  const minValue = useMemo(() => {
+    return displayOptions?.minValue
+  }, [displayOptions])
+
+  const minValueString = useMemo(() => {
+    return minValue ? AssetValue.fromTokenAmount(network.endpoint.primaryToken, minValue).toString({
+      showSymbol: true,
+      numberStyle: AssetValueNumberStyle.RAW_SCALED
+    }) : ''
+  }, [minValue, network.endpoint.primaryToken])
 
   const balanceDec = useMemo(() => {
     if (balances[primaryToken]) {
@@ -84,7 +101,7 @@ const SendForm: React.FunctionComponent<SendFormProps> = ({
 
   const rate = useMemo(() => {
     const r = rates[primaryToken]
-    return (r && !Number.isNaN(r.value)) ? r : undefined
+    return (r && !Number.isNaN(r.value)) ? r : null
   }, [rates, primaryToken])
 
   const gasCostDec = useMemo(() => {
@@ -119,22 +136,26 @@ const SendForm: React.FunctionComponent<SendFormProps> = ({
     setActivePanel(1)
   }, [])
 
+  const showCompleted = useCallback(() => {
+    setActivePanel(2)
+  }, [])
+
   const resetGasLimit = useCallback(() => {
-    setGasLimitValue(initialValues?.gasLimitValue || `${network.config?.gasMinLimit}`)
+    setGasLimitValue(initialValues?.gasLimitValue || `${network.config?.minGasLimit}`)
   }, [initialValues, network])
 
   const resetGasPrice = useCallback(() => {
     setGasPriceValue(
-      initialValues?.gasPriceValue
-      || AssetValue.fromTokenAmount(primaryToken, network.config?.gasMinPrice).toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED })
+      AssetValue.fromTokenAmount(primaryToken, initialValues?.gasPriceValue || network.config?.minGasPrice).toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED })
     )
   }, [ initialValues, primaryToken, network])
 
-  const onReset = useCallback(() => {
+  const onLoad = useCallback(() => {
     setTxId('')
     setToValue(initialValues?.toValue || '')
     setDataValue(initialValues?.dataValue || '')
     setCryptoValue(initialValues?.cryptoValue || '')
+    setValueError('')
     setFiatValue('')
     resetGasPrice()
     resetGasLimit()
@@ -143,34 +164,52 @@ const SendForm: React.FunctionComponent<SendFormProps> = ({
     setTotalValue('')
     setTotalCurrencyValue('')
     setTotalError('')
-    setActivePanel(0)
-  }, [ initialValues, resetGasLimit, resetGasPrice ])
+  }, [initialValues, resetGasLimit, resetGasPrice])
 
   // setup initial values on load
   useEffect(() => {
-    onReset()
-  }, [ onReset ])
+    onLoad()
+  }, [onLoad])
 
-  const send = useCallback(async (tx: NewTransaction) => {
-    if (account && network && network.config) {
-      setTxId(await signAndSendTx(account, network, tx))
+  // reset to start phase
+  const onReset = useCallback(() => {
+    showPreview()
+    onLoad()
+  }, [onLoad, showPreview])
+
+  const send = useCallback(async (tx: Transaction) => {
+    if (wallet && network && network.config) {
+      const signedTx = await signTx(wallet, network, tx)
+
+      const { hash } = await provider.sendSignedTransaction(signedTx)
+
+      setTxId(hash)
+
+      if (!displayOptions?.skipCompleted) {
+        showCompleted()
+      }
+
+      if (onComplete) {
+        onComplete(hash)
+      }
     } else {
-      throw new Error('Account and/or network not available')
+      throw new Error('Wallet and/or network not available')
     }
-    setActivePanel(2)
-  }, [ account, network ])
+  }, [wallet, network, provider, displayOptions, onComplete, showCompleted])
 
   const props = {
     txId,
-    account,
+    wallet,
     primaryToken,
     gasPerDataByte: network.config?.gasPerDataByte,
-    gasMinLimit: network.config?.gasMinLimit,
-    gasMinPrice: network.config?.gasMinPrice,
-    fromValue: account.address(),
+    minGasLimit: network.config?.minGasLimit,
+    minGasPrice: network.config?.minGasPrice,
+    fromValue: wallet.address(),
     toValue, setToValue,
     balanceDec, gasCostDec, transferValueDec,
+    minValue, minValueString,
     cryptoValue, setCryptoValue,
+    valueError, setValueError,
     fiatValue, setFiatValue,
     dataValue, setDataValue,
     rate,
@@ -187,8 +226,8 @@ const SendForm: React.FunctionComponent<SendFormProps> = ({
   return (
     <Container className={className}>
       <SlidingPanels active={activePanel}>
-        <PreviewForm props={props} onNext={showConfirmation} />
-        <StyledConfirmForm props={props} onPrevious={showPreview} onSend={send} />
+        <PreviewForm props={props} displayOptions={displayOptions} onNext={showConfirmation} />
+        <StyledConfirmForm props={props} displayOptions={displayOptions} onPrevious={showPreview} onSend={send} />
         <CompletedForm props={props} onReset={onReset} />
       </SlidingPanels>
     </Container>
@@ -198,11 +237,12 @@ const SendForm: React.FunctionComponent<SendFormProps> = ({
 export interface Props {
   isActive: boolean,
   className?: string,
-  onComplete?: () => {},
+  onComplete?: (txHash: string) => {},
   initialValues?: SendInitialValues,
+  displayOptions?: DisplayOptions,
 }
 
-const Send: React.FunctionComponent<Props> = ({ isActive, className, onComplete, initialValues }) => {
+const Send: React.FunctionComponent<Props> = ({ isActive, className, onComplete, initialValues, displayOptions }) => {
   if (!isActive) {
     return null
   }
@@ -210,20 +250,26 @@ const Send: React.FunctionComponent<Props> = ({ isActive, className, onComplete,
   return (
     <GlobalConsumer>
       {({ network }: GlobalContextValue) => (
-        <AccountConsumer>
-          {(props: AccountContextValue) => (
-            (props.account && network) ? (
-              <SendForm
-                {...props}
-                account={props.account!}
-                network={network!}
-                className={className}
-                onComplete={onComplete}
-                initialValues={initialValues}
-              />
+        <WalletConsumer>
+          {(props: WalletContextValue) => (
+            (props.wallet && network) ? (
+              <ChainConsumer>
+                {(provider: Provider) => (
+                  <SendForm
+                    {...props}
+                    wallet={props.wallet!}
+                    network={network!}
+                    provider={provider}
+                    className={className}
+                    onComplete={onComplete}
+                    initialValues={initialValues}
+                    displayOptions={displayOptions}
+                  />
+                )}
+              </ChainConsumer>
             ) : <LoadingIcon />
           )}
-        </AccountConsumer>
+        </WalletConsumer>
       )}
     </GlobalConsumer>
   )

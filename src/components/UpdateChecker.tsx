@@ -7,7 +7,7 @@ import { openExternalUrl } from '../utils/ipc'
 import Modal from './Modal'
 import Button from './Button'
 import { useUpdates } from '../hooks'
-import { AccountConsumer, AccountContextValue } from '../contexts'
+import { WalletConsumer, WalletContextValue } from '../contexts'
 import Markdown from './Markdown'
 
 const HEIGHT = '640px'
@@ -79,13 +79,13 @@ const UpdateCheckerModal: React.FunctionComponent = () => {
 
 const UpdateChecker: React.FunctionComponent = () => {
   return (
-    <AccountConsumer>
-      {(props: AccountContextValue) => (
-        (props.account) ? (
+    <WalletConsumer>
+      {(props: WalletContextValue) => (
+        (props.wallet) ? (
           <UpdateCheckerModal />
         ) : null
       )}
-    </AccountConsumer>
+    </WalletConsumer>
   )
 }
 

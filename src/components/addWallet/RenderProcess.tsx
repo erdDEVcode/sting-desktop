@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import styled from '@emotion/styled'
 
-import { Account } from '../../types/all'
+import { Wallet } from '../../types/all'
 import Button from '../Button'
 import { GlobalConsumer } from '../../contexts'
 import CreatePassphrase from './CreatePassphrase'
@@ -20,21 +20,21 @@ interface Props {
 }
 
 const RenderProcess: React.FunctionComponent<Props> = ({ process, onComplete }) => {
-  const gotoDashboard = useCallback((addAccount, account) => {
-    addAccount(account)
+  const gotoDashboard = useCallback((addWallet, wallet) => {
+    addWallet(wallet)
     if (onComplete) {
       onComplete()
     }
   }, [onComplete])
 
-  const buildButtonRenderFn = useCallback(addAccount => (account: Account) => (
-    <StyledButton onClick={() => gotoDashboard(addAccount, account)}>Add account</StyledButton>
+  const buildButtonRenderFn = useCallback(addWallet => (wallet: Wallet) => (
+    <StyledButton onClick={() => gotoDashboard(addWallet, wallet)}>Add wallet</StyledButton>
   ), [ gotoDashboard ])
 
   return (
     <GlobalConsumer>
-      {({ addAccount }) => {
-        const renderSuccess = buildButtonRenderFn(addAccount)
+      {({ addWallet }) => {
+        const renderSuccess = buildButtonRenderFn(addWallet)
 
         switch (process) {
           case WALLET_PROCESS.CREATE_PASSPHRASE:

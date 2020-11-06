@@ -1,12 +1,12 @@
 import Elrond from '@elrondnetwork/elrond-core-js'
 
 import _ from './lodash'
-import { Account, Network, NewTransaction, SignedTransaction } from '../types/all'
+import { Wallet, Network, Transaction, SignedTransaction, TransactionReceipt } from '../types/all'
 import * as ipcMethods from '../utils/ipc'
 
 const bip39 = require('bip39')
 
-const testAccount = (a: any) => {
+const validateAccount = (a: any) => {
   a.sign(new TextEncoder().encode('test message'))
 }
 
@@ -14,7 +14,7 @@ export const generateMnemonic = (): string[] => {
   return new Elrond.account().generateMnemonic().split(' ')
 }
 
-export const deriveAccountFromMnemonic = (mnemonic: string): Account | null => {
+export const deriveWalletFromMnemonic = (mnemonic: string): Wallet | null => {
   mnemonic = mnemonic.trim()
 
   if (!bip39.validateMnemonic(mnemonic)) {
@@ -24,7 +24,7 @@ export const deriveAccountFromMnemonic = (mnemonic: string): Account | null => {
   try {
     let account = new Elrond.account()
     account.loadFromMnemonic(mnemonic)
-    testAccount(account)
+    validateAccount(account)
     return account
   } catch (err) {
     console.warn(`Error deriving from mnemonic: ${err.message}`)
@@ -33,13 +33,13 @@ export const deriveAccountFromMnemonic = (mnemonic: string): Account | null => {
 }
 
 
-export const deriveAccountFromJsonKeyFileString = (json: string, password: string): Account | null => {
+export const deriveWalletFromJsonKeyFileString = (json: string, password: string): Wallet | null => {
   json = json.trim()
 
   try {
     let account = new Elrond.account()
     account.loadFromKeyFile(JSON.parse(json), password)
-    testAccount(account)
+    validateAccount(account)
     return account
   } catch (err) {
     console.warn(`Error deriving from JSON: ${err.message}`)
@@ -51,14 +51,14 @@ export const deriveAccountFromJsonKeyFileString = (json: string, password: strin
 const PEM_REGEX = /-----BEGIN[^-]+-----([^-]+)-----END[^-]+/igm
 
 
-export const deriveAccountFromPemFileString = (pem: string): Account | null => {
+export const deriveWalletFromPemFileString = (pem: string): Wallet | null => {
   try {
     const match = _.get(PEM_REGEX.exec(pem.trim()), '1', '').trim()
     if (match) {
       const bytes = Buffer.from(window.atob(match), 'hex')
       let account = new Elrond.account()
       account.loadFromPrivateKey(bytes)
-      testAccount(account)
+      validateAccount(account)
       return account
     }
   } catch (err) {
@@ -69,33 +69,26 @@ export const deriveAccountFromPemFileString = (pem: string): Account | null => {
 }
 
 
-export const signTx = async (account: Account, network: Network, tx: NewTransaction): Promise<SignedTransaction> => {
-  const { nonce } = await network.connection.getAddress(account.address())
+export const signTx = async (wallet: Wallet, network: Network, tx: Transaction): Promise<SignedTransaction> => {
+  const { nonce } = await network.connection.getAddress(wallet.address())
 
   const t = new Elrond.transaction(
     nonce,
-    account.address(),
+    wallet.address(),
     tx.receiver,
     tx.value,
-    parseInt(tx.gasPrice),
-    parseInt(tx.gasLimit),
+    parseInt(`${tx.gasPrice!}`, 10),
+    parseInt(`${tx.gasLimit!}`, 10),
     tx.data,
     network.config!.chainId,
     1
   )
 
   const s = t.prepareForSigning()
-  t.signature = await account.sign(s)
+  t.signature = await wallet.sign(s)
 
   const st = t.prepareForNode()
   return st
-}
-
-
-export const signAndSendTx = async (account: Account, network: Network, tx: NewTransaction): Promise<string> => {
-  const st = await signTx(account, network, tx)
-
-  return network.connection.sendTransaction(st)
 }
 
 
@@ -110,7 +103,7 @@ export const isLedgerSupported = async () => {
 }
 
 
-class LedgerAccount implements Account {
+class LedgerWallet implements Wallet {
   _address: string
   _hex: string
 
@@ -140,14 +133,14 @@ class LedgerAccount implements Account {
 }
 
 
-export const getLedgerAccount = async () => {
-  const { data, error } = await ipcMethods.getLedgerAccount()
+export const getLedgerWallet = async () => {
+  const { data, error } = await ipcMethods.getLedgerWallet()
 
   if (error) {
     throw new Error(error.message)
   }
 
-  return new LedgerAccount(data!.address)
+  return new LedgerWallet(data!.address)
 }
 
 

@@ -1,13 +1,15 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
+import { Provider } from 'erdor'
 
-import { Network, Account, Balances, Delegation, Rates } from '../../types/all'
+import { Network, Wallet, Balances, Delegation, Rates } from '../../types/all'
 import {
+  ChainConsumer,
   GlobalConsumer,
   GlobalContextValue,
-  AccountConsumer,
-  AccountContextValue,
+  WalletConsumer,
+  WalletContextValue,
 } from '../../contexts'
 import { AssetValue } from '../../utils/number'
 import LoadingIcon from '../LoadingIcon'
@@ -15,21 +17,25 @@ import QrCodeModal from '../QrCodeModal'
 import { ViewAddressInExplorer, ViewInExplorerContext } from '../ViewInExplorer'
 import IconButton from '../IconButton'
 import CopyToClipboardButton from '../CopyToClipboardButton'
-import BalanceBlock from '../dashboard/BalanceBlock'
+import BalanceValueWithSymbol from '../BalanceValueWithSymbol'
+import BalanceValueRow from './BalanceValueRow'
 import ValueBox from '../ValueBox'
+import BalancesTable from './BalancesTable'
+import ClaimDelegationRewardsRow from './ClaimDelegationRewardsRow'
+import DelegationQueueRow from './DelegationQueueRow'
 
 const Container = styled.div`
   ${flex({ direction: 'column', justify: 'center', align: 'center' })};
   background-color: ${(p: any) => p.theme.content.bgColor};
   color: ${(p: any) => p.theme.content.textColor};
-  height: 100%;
   width: 100%;
+  min-height: 100%;
 `
 
 const AddressContainer = styled.div`
   ${(p: any) => p.theme.font('data')};
   font-size: 0.8rem;
-  margin: 0 0 5rem;
+  margin: 2rem 0;
   ${flex({ direction: 'row', justify: 'center', align: 'center', basis: 0 })};
 
   button {
@@ -39,64 +45,88 @@ const AddressContainer = styled.div`
 
 const AddressValueBox = styled(ValueBox)``
 
-const ValuesContainer = styled.div`
-  ${flex({ direction: 'column', justify: 'center', align: 'center', basis: 0 })};
-  margin: 0;
+const TotalContainer = styled.div`
+  position: relative;
+  border-radius: 12em;
+  background-color: ${(p: any) => p.theme.overview.totalContainer.bgColor};
+  min-width: 30rem;
+  padding: 3rem 0;
+  margin: 1rem 0;
+`
+
+const TotalBalanceValue = styled(BalanceValueWithSymbol)`
+  font-size: 3rem;
+`
+
+const NoPricingInfoText = styled.div`
+  ${(p: any) => p.theme.font('body', 'regular', 'italic')};
+  text-align: center;
+`
+
+const BreakdownContainer = styled.div`
+  ${flex({ direction: 'column', justify: 'flex-start', align: 'center' })};
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  padding: 0 2rem;
   font-size: 1rem;
 `
 
-const TotalContainer = styled.div`
-  position: relative;
-  padding: 3em;
-  border-radius: 12em;
-  ${flex({ direction: 'column', justify: 'center', align: 'center' })};
-  background-color: ${(p: any) => p.theme.overview.totalContainer.bgColor};
-  width: 30em;
-  max-height: 20em;
-  margin-bottom: 1rem;
-`
-
-const SubValuesContainer = styled.div`
-  ${flex({ direction: 'row', justify: 'center', align: 'center' })};
-`
-
-const BalanceContainer = styled.div`
-  font-size: 70%;
-  margin: 0 1rem;
-  width: 30em;
-  height: 17em;
-  position: relative;
-  padding: 3em 0;
-  border-radius: 12em;
-  ${flex({ direction: 'column', justify: 'flex-start', align: 'center' })};
-  background-color: ${(p: any) => p.theme.overview.balanceContainer.bgColor};
+const TableContainer = styled(BalancesTable)`
+  width: 100%;
+  text-align: left;
+  margin-bottom: 2rem;
 
   h2 {
-    margin: 0 0 1rem;
+    padding-bottom: 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    width: 100%;
+  }
+
+  table {
+    width: 100%;
+    border: 1px solid ${(p: any) => p.theme.overview.tableContainer.table.borderColor};
+    border-radius: 5px;
+    font-size: 1rem;
+
+    thead {
+      tr {
+        ${(p: any) => p.theme.font('body', 'bold')};
+        font-size: 70%;
+        color: ${(p: any) => p.theme.overview.tableContainer.table.header.textColor};
+      }
+      th {
+        padding: 1rem;
+      }
+    }
+
+    td {
+      text-align: left;
+      padding: 1rem;
+    }
   }
 `
 
-const NoDelegations = styled.em`
-  display: block;
-  ${(p: any) => p.theme.font('body', 'normal', 'italic')};
-  font-size: 0.8rem;
-  margin-top: 1rem;
-`
-
-const DelegatedContainer= styled(BalanceContainer)`
-`
 
 interface DataProps {
   network: Network,
-  account: Account,
+  wallet: Wallet,
+  provider: Provider,
   balances: Balances,
   delegation?: Delegation,
   rates: Rates,
   fetchTransactions: () => Promise<any>,
 }
 
+const NoPricingInfo = () => {
+  return (
+    <NoPricingInfoText>No pricing info available 😕</NoPricingInfoText>
+  )
+}
+
 const OverviewData: React.FunctionComponent<DataProps> = props => {
-  const { balances, delegation, rates, account, network } = props
+  const { balances, delegation, rates, wallet, network, provider } = props
 
   const delegationsSupported = useMemo(() => !!(network?.endpoint?.delegations), [ network ])
 
@@ -104,39 +134,55 @@ const OverviewData: React.FunctionComponent<DataProps> = props => {
 
   const [ showQrCode, setShowQrCode ] = useState(false)
 
-  const balance = useMemo(() => balances[primaryToken], [ balances, primaryToken ])
-
   const rate = useMemo(() => {
     const r = rates[primaryToken]
     return (r && !Number.isNaN(r.value)) ? r : undefined
   }, [rates, primaryToken])
 
-  const delegationsTotal = useMemo(() => {
+  const balance = useMemo(() => balances[primaryToken], [ balances, primaryToken ])
+
+  const {
+    delegationsTotal,
+    activeStake,
+    waitingStake,
+    claimableRewards,
+    hasActiveStake,
+    hasWaitingStake,
+    hasClaimableRewards,
+   } = useMemo(() => {
     if (!delegationsSupported || !delegation) {
-      return undefined
+      return {}
     }
 
     const aActiveStake = AssetValue.fromTokenAmount(primaryToken, delegation.activeStake || '0')
     const aWaitingStake = AssetValue.fromTokenAmount(primaryToken, delegation.waitingStake || '0')
     const aClaimable = AssetValue.fromTokenAmount(primaryToken, delegation.claimable || '0')
+    const total = aActiveStake.add(aWaitingStake).add(aClaimable).toBalance()
 
-    return aActiveStake.add(aWaitingStake).add(aClaimable).toBalance()
+    return {
+      delegationsTotal: total,
+      activeStake: aActiveStake.toBalance(),
+      waitingStake: aWaitingStake.toBalance(),
+      claimableRewards: aClaimable.toBalance(),
+      hasActiveStake: aActiveStake.gt(0),
+      hasWaitingStake: aWaitingStake.gt(0),
+      hasClaimableRewards: aClaimable.gt(0),
+    }
   }, [ primaryToken, delegationsSupported, delegation ])
 
-  const total = useMemo(() => {
-    if (balance) {
-      const aBalance = AssetValue.fromBalance(balance)
+  const totalCurrencyBalance = useMemo(() => {
+    if (balance && rate) {
+      let aBalance: AssetValue = AssetValue.fromBalance(balance)
 
       if (delegationsSupported && delegationsTotal) {
-        const aDelegations = AssetValue.fromBalance(delegationsTotal)
-        return aBalance.add(aDelegations).toBalance()
-      } else {
-        return aBalance.toBalance()
+          aBalance = aBalance.add(AssetValue.fromBalance(delegationsTotal))
       }
+
+      return aBalance.toCurrencyValue(rate).toBalance()
     } else {
       return undefined
     }
-  }, [ balance, delegationsSupported, delegationsTotal ])
+  }, [ balance, delegationsSupported, delegationsTotal, rate ])
 
   const toggleQrCode = useCallback(() => {
     setShowQrCode(!showQrCode)
@@ -145,50 +191,54 @@ const OverviewData: React.FunctionComponent<DataProps> = props => {
   return (
     <Container>
       <AddressContainer>
-        <AddressValueBox>{account.address()}</AddressValueBox>
-        <CopyToClipboardButton value={account.address()} />
+        <AddressValueBox>{wallet.address()}</AddressValueBox>
+        <CopyToClipboardButton value={wallet.address()} />
         <IconButton icon='qrcode' tooltip='View QR code' onClick={toggleQrCode} />
-        <ViewAddressInExplorer address={account.address()}>
+        <ViewAddressInExplorer address={wallet.address()}>
           {({ onClick }: ViewInExplorerContext) => <IconButton icon='open-external' tooltip='View in explorer' onClick={onClick}/>}
         </ViewAddressInExplorer>
         <QrCodeModal
-          title='Your account address'
-          value={account.address()}
+          title='Your wallet address'
+          value={wallet.address()}
           onRequestClose={toggleQrCode}
           isOpen={showQrCode}
         />
       </AddressContainer>
-      <ValuesContainer>
-        <TotalContainer>
-          <BalanceBlock
-            token={primaryToken}
-            balance={total}
-            rate={rate}
-          />
-        </TotalContainer>
-        <SubValuesContainer>
-          <BalanceContainer>
-            <h2>Balance</h2>
-            <BalanceBlock
-              token={primaryToken}
-              balance={balance}
-              rate={rate}
+      <TotalContainer>
+        {totalCurrencyBalance ? (
+          <TotalBalanceValue balance={totalCurrencyBalance!} />
+        ) : (
+          <NoPricingInfo />
+        )}
+      </TotalContainer>
+      <BreakdownContainer>
+        <TableContainer title='Wallet'>
+          <BalanceValueRow balance={balance} rate={rate} />
+        </TableContainer>
+        {delegationsTotal ? (
+          <TableContainer title='Staking'>
+            {hasActiveStake ? <BalanceValueRow label='Fully delegated' balance={activeStake} rate={rate} /> : null}
+            <DelegationQueueRow
+              network={network}
+              delegation={delegation}
+              provider={provider}
+              wallet={wallet}
+              rate={rate} 
             />
-          </BalanceContainer>
-          <DelegatedContainer>
-            <h2>Delegations</h2>
-            {delegationsSupported ? (
-              <BalanceBlock
-                token={primaryToken}
-                balance={delegationsTotal}
-                rate={rate}
-              />
-            ) : (
-              <NoDelegations>Not supported yet!</NoDelegations>
-            )}
-          </DelegatedContainer>
-        </SubValuesContainer>
-      </ValuesContainer>
+          </TableContainer>
+        ) : null}
+        {(delegationsTotal/* && hasClaimableRewards*/) ? (
+          <TableContainer title='Rewards' columnNames={[ 'Asset', 'Claimable reward', 'Value' ]}>
+            <ClaimDelegationRewardsRow 
+              network={network} 
+              delegation={delegation}
+              provider={provider}
+              wallet={wallet}
+              rate={rate} 
+            />
+          </TableContainer>
+        ) : null}
+      </BreakdownContainer>
     </Container>
   )
 }
@@ -206,13 +256,22 @@ const Overview: React.FunctionComponent<Props> = ({ isActive }) => {
   return (
     <GlobalConsumer>
       {({ network }: GlobalContextValue) => (
-        <AccountConsumer>
-          {(props: AccountContextValue) => (
-            (network && props.account) ? (
-              <OverviewData {...props} account={props.account!} network={network!} />
+        <WalletConsumer>
+          {(props: WalletContextValue) => (
+            (network && props.wallet) ? (
+              <ChainConsumer>
+                {(provider: Provider) => (
+                  <OverviewData 
+                    {...props} 
+                    wallet={props.wallet!} 
+                    network={network!} 
+                    provider={provider}
+                  />
+                )}
+              </ChainConsumer>
             ) : <LoadingIcon />
           )}
-        </AccountConsumer>
+        </WalletConsumer>
       )}
     </GlobalConsumer>
   )

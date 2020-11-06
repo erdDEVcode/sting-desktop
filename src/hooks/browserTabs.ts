@@ -149,6 +149,17 @@ export const useBrowserTabs = (initialTabs: string[]): UseBrowserTabsResult => {
       return
     }
 
+    // ensure URL is valid
+    try {
+      new URL(url)
+    } catch (_ignore) {
+      if (0 <= url.indexOf('.')) {
+        url = `http://${url}`
+      } else {
+        url = `https://www.google.com/search?q=${url}`
+      }
+    }
+
     tabs[id].url = url
     tabs[id].pendingUrl = url
     tabs[id].title = url

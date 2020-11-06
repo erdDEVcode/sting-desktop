@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react'
 
-import { Account, Network, NetworkEndpoint } from '../types/all'
+import { Wallet, Network, NetworkEndpoint } from '../types/all'
 import { setupThemes } from '../themes'
 import { setupCoreFonts } from '../fonts'
-import { useNetwork, useAccounts } from '../hooks'
-import { deriveAccountFromMnemonic } from '../utils/erdWallet'
+import { useNetwork, useWallets } from '../hooks'
+import { deriveWalletFromMnemonic } from '../utils/erdWallet'
 import { StorageProvider } from './storage'
 
 // setup fonts
@@ -20,11 +20,11 @@ export interface GlobalContextValue {
   setThemeName: Function,
   network: Network | null,
   switchNetwork: (endpoint: NetworkEndpoint) => void,
-  accounts: Account[],
-  activeAccount?: Account,
-  setActiveAccount: Function,
-  addAccount: Function,
-  removeAccount: Function,
+  wallets: Wallet[],
+  activeWallet?: Wallet,
+  setActiveWallet: Function,
+  addWallet: Function,
+  removeWallet: Function,
 }
 
 
@@ -36,7 +36,7 @@ export const GlobalProvider: React.FunctionComponent = ({ children }) => {
   )
   const [ themeName, setThemeName ] = useState('light')
   const { network, switchNetwork } = useNetwork()
-  const { accounts, addAccount, removeAccount, setActiveAccount, activeAccount } = useAccounts()
+  const { wallets, addWallet, removeWallet, setActiveWallet, activeWallet } = useWallets()
 
   const theme = useMemo(() => {
     const r = themes.get(themeName)
@@ -52,19 +52,17 @@ export const GlobalProvider: React.FunctionComponent = ({ children }) => {
       setThemeName,
       network,
       switchNetwork,
-      accounts,
-      activeAccount,
-      setActiveAccount,
-      addAccount,
-      removeAccount,
+      wallets,
+      activeWallet,
+      setActiveWallet,
+      addWallet,
+      removeWallet,
     }}>
-      <StorageProvider account={activeAccount}>
+      <StorageProvider wallet={activeWallet}>
         {children}
       </StorageProvider>
     </GlobalContext.Provider>
   )
 }
 
-
 export const GlobalConsumer = GlobalContext.Consumer
-

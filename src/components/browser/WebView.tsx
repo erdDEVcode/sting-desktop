@@ -10,7 +10,8 @@ import { WebViewCallHandler } from './handler'
 import { HandlerHelper } from './interfaces'
 import { extractDappId } from '../../utils/url'
 import { openExternalUrl } from '../../utils/ipc'
-import { Account, Dapp, Network } from '../../types/all'
+import { Wallet, Dapp, Network, Transaction } from '../../types/all'
+import SignAndSendTransaction from '../SignAndSendTransaction'
 
 const Container = styled.div`
   width: 100%;
@@ -33,7 +34,7 @@ interface Props {
   onTitleChange: Function,
   onUiTask: Function, 
   callHandler: WebViewCallHandler | null,
-  account?: Account,
+  wallet?: Wallet,
   network: Network | null,
 }
 
@@ -48,6 +49,7 @@ interface WebViewState {
 export default class WebView extends Component<Props> implements HandlerHelper {
   webViewEventHandlers: Record<string, Function>
   webView: any
+  signAndSendTransactionInterface: any
   state: WebViewState = {}
   
   constructor (props: any) {
@@ -99,6 +101,7 @@ export default class WebView extends Component<Props> implements HandlerHelper {
 
     return (
       <Container>
+        <SignAndSendTransaction ref={this._onSignAndSendTxRef} />
         <ConnectWalletModal 
           isOpen={!!this.state.showConnectWalletModal} 
           dapp={this.getDapp()}
@@ -217,14 +220,14 @@ export default class WebView extends Component<Props> implements HandlerHelper {
     openExternalUrl(this.props.url)
   }
 
-  async askUserToAllowDappToSeeTheirAccountAddress (address: string) {
-    return new Promise((resolve, onError) => {
+  async askUserToAllowDappToSeeTheirWalletAddress (address: string) {
+    return new Promise((resolve, reject) => {
       this.setState({
         showConnectWalletModal: { 
           address,
           onAllow: () => resolve(true),
           onDisallow: () => resolve(false), 
-          onError,
+          onError: reject,
         }
       })
     }).finally(() => {
@@ -232,7 +235,15 @@ export default class WebView extends Component<Props> implements HandlerHelper {
     })
   }
 
+  async signAndSendTransaction (tx: Transaction) {
+    return this.signAndSendTransactionInterface.execute(tx)
+  }
+
   /* internal */
+
+  _onSignAndSendTxRef = (v: any) => {
+    this.signAndSendTransactionInterface = v
+  }
 
   _onWebViewRef = (v: any) => {
     this.webView = v

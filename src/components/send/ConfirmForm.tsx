@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
-import { NewTransaction } from '../../types/all'
+import { Transaction } from '../../types/all'
 import { AssetValueNumberStyle } from '../../utils/number'
 import Button from '../Button'
 import TotalCost from './TotalCost'
@@ -10,6 +10,7 @@ import FiatValue from './FiatValue'
 import ErrorBox from '../ErrorBox'
 import LoadingIcon from '../LoadingIcon'
 import LedgerSvg from '../LedgerSvg'
+import { DisplayOptions } from './interfaces'
 
 
 const Container = styled.div`
@@ -61,8 +62,9 @@ const BackButton = styled(Button)`
 
 interface Props {
   className?: string,
+  displayOptions?: DisplayOptions,
   onPrevious?: () => void,
-  onSend: (tx: NewTransaction) => Promise<void>,
+  onSend: (tx: Transaction) => Promise<void>,
   props: any,
 }
 
@@ -71,7 +73,7 @@ const ConfirmForm: React.FunctionComponent<Props> = ({
   onPrevious,
   onSend,
   props: {
-    account,
+    wallet,
     fromValue,
     toValue,
     transferValueDec,
@@ -91,7 +93,7 @@ const ConfirmForm: React.FunctionComponent<Props> = ({
 
   const transferValueString = useMemo(() => {
     if (transferValueDec) {
-      return transferValueDec.toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED, symbolSuffix: true })
+      return transferValueDec.toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED, showSymbol: true })
     } else {
       return null
     }
@@ -99,7 +101,7 @@ const ConfirmForm: React.FunctionComponent<Props> = ({
 
   const transferCurrencyValueString = useMemo(() => {
     if (rate && transferValueDec) {
-      return transferValueDec.toCurrencyValueString(rate, { symbolPrefix: true })
+      return transferValueDec.toCurrencyValueString(rate)
     } else {
       return null
     }
@@ -113,11 +115,11 @@ const ConfirmForm: React.FunctionComponent<Props> = ({
     setSending(true)
     setError('')
     
-    const tx: NewTransaction = {
+    const tx: Transaction = {
       sender: fromValue,
       receiver: toValue,
-      value: transferValueDec.toString(),
-      gasPrice: gasPriceValueDec.toString(),
+      value: transferValueDec.toString({ numberStyle: AssetValueNumberStyle.RAW }),
+      gasPrice: gasPriceValueDec.toNumber({ numberStyle: AssetValueNumberStyle.RAW }),
       gasLimit: gasLimitValue,
       data: dataValue,
     }
@@ -179,7 +181,7 @@ const ConfirmForm: React.FunctionComponent<Props> = ({
         <Button onClick={doSend}>
           {sending ? <LoadingIcon /> : 'Confirm and send'}
         </Button>
-        {(sending && account.isLedger) ? (
+        {(sending && wallet.isLedger) ? (
           <WaitingForLedger>
             <LedgerSvg />
             <span>Please confirm on your Ledger...</span>

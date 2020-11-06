@@ -8,7 +8,6 @@ const { Shortcuts } = require('shortcuts')
 
 const IPC = require('../../common/constants/ipc')
 const WEBVIEW_TASKS = require('../../common/constants/ipcWebViewTasks')
-const WEBVIEW_CONTEXT_TASKS = require('../../common/constants/ipcWebViewContextEvents')
 const KEYMAP = require('../../common/constants/keyMap')
 
 // to talk to host WebView react component
@@ -58,80 +57,22 @@ ipcRenderer.on(IPC.WEBVIEW_CONTEXT_EVENT, (_ignore, data) => {
 })
 
 webFrame.executeJavaScript(`
-  class ElrondIpcProvider {
-    constructor (parentInstance, erdjs) {
+  class StingIpcProvider {
+    constructor (parentInstance) {
       this._parentInstance = parentInstance
-      this._erdjs = erdjs
-    }
 
-    async _sendRequest (method, args) {
-      return await this._parentInstance._sendRequest('${WEBVIEW_TASKS.ERD_PROVIDER_CALL}', { method, args })
-    }
-
-    // Implement Provider interface from:
-    // https://github.com/ElrondNetwork/elrond-sdk/blob/erdjs-development/erdjs/src/interface.ts
-
-    async getNetworkConfig() {
-      const data = await this._sendRequest('getNetworkConfig')
-      return this._erdjs.NetworkConfig.fromHttpResponse(data)
-    }
-
-    async getAccount(address) {
-      const data = await this._sendRequest('getAccount', { address })
-      return this._erdjs.AccountOnNetwork.fromHttpResponse(data)
-    }
-
-    async getBalance(address) {
-      const data = await this._sendRequest('getBalance', { address })
-      return this._erdjs.Balance.fromString(data)
-    }
-
-    async getNonce(address) {
-      const data = await this._sendRequest('getNonce', { address })
-      return new this._erdjs.Nonce(data)
-    }
-
-    async getVMValueString(contractAddress, funcName, funcArgs) {
-      return await this._sendRequest('getVMValueString', { contractAddress, funcName, funcArgs })
-    }
-
-    async getVMValueInt(contractAddress, funcName, funcArgs) {
-      return await this._sendRequest('getVMValueInt', { contractAddress, funcName, funcArgs })
-    }
-
-    async getVMValueHex(contractAddress, funcName, funcArgs) {
-      return await this._sendRequest('getVMValueHex', { contractAddress, funcName, funcArgs })
-    }
-
-    async getVMValueQuery(contractAddress, funcName, funcArgs) {
-      return await this._sendRequest('getVMValueQuery', { contractAddress, funcName, funcArgs })
-    }
-
-    async sendTransaction (tx) {
-      const signedTx = tx.toSendable()
-      const txHash = await this._sendRequest('sendTransaction', { signedTx })
-      return new this._erdjs.TransactionHash(txHash)
-    }
-
-    async simulateTransaction (tx) {
-      const signedTx = tx.toSendable()
-      return this._sendRequest('simulateTransaction', { signedTx })
-    }
-
-    async getTransaction(txHash) {
-      const data = await this._sendRequest('getTransaction', { txHash })
-      if (!data) {
-        throw new Error('Tx not found: ' + txHash)
-      }
-      return this._erdjs.TransactionOnNetwork.fromHttpResponse(data)
-    }
-
-    async getTransactionStatus(txHash) {
-      const data = await this._sendRequest('getTransactionStatus', { txHash })
-      if (!data) {
-        throw new Error('Tx not found: ' + txHash)
-      }
-      return new this._erdjs.TransactionStatus(data)
+      ;[
+        'getNetworkConfig',
+        'getAccount',
+        'queryContract',
+        'signAndSendTransaction',
+        'sendSignedTransaction',
+        'getTransaction'
+      ].forEach(f => {
+        this[f] = async (...args) => {
+          return await this._parentInstance._sendRequest('${WEBVIEW_TASKS.ERD_PROVIDER_CALL}', { f, args })
+        }
+      })
     }
   }
 
@@ -182,7 +123,7 @@ webFrame.executeJavaScript(`
     constructor () {
       super()
       this._pendingRequests = {}
-      this._providers = {}
+      this._provider = new StingIpcProvider()
       this._id = 1
 
       // When we receive an IPC response
@@ -234,12 +175,8 @@ webFrame.executeJavaScript(`
       })
     }
 
-    getProvider (erdjs) {
-      if (!this._providers[erdjs]) {
-        this._providers[erdjs] = new ElrondIpcProvider(this, erdjs)
-      }
-
-      return this._providers[erdjs]
+    get provider () {
+      return this._provider
     }
 
     async getAccountAddress () {
@@ -248,10 +185,6 @@ webFrame.executeJavaScript(`
 
     async getNetworkId () {
       return await this._sendRequest('${WEBVIEW_TASKS.META_CALL}', { method: 'getNetworkId' })
-    }
-
-    async requestAccountAccess () {
-      await this._sendRequest('${WEBVIEW_TASKS.META_CALL}', { method: 'requestAccountAccess' })
     }
   }
 

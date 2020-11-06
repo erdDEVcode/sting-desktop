@@ -15,6 +15,7 @@ import ErrorBox from '../ErrorBox'
 import Button from '../Button'
 import IconButton from '../IconButton'
 import TextButton from '../TextButton'
+import { DisplayOptions } from './interfaces'
 
 const Container = styled.div``
 
@@ -95,6 +96,7 @@ const BalanceValue = styled.span`
 `
 
 const TotalError = styled(ErrorBox)``
+const ValueError = styled(ErrorBox)``
 
 const PreviewButton = styled(Button)`
   margin-top: 2rem;
@@ -109,19 +111,23 @@ const WHOLE_NUMBER_REGEX = /^[0-9]+$/
 
 interface PreviewProps {
   className?: string,
+  displayOptions?: DisplayOptions,
   props: any,
   onNext: () => void,
 }
 
 const PreviewForm: React.FunctionComponent<PreviewProps> = ({
   className,
+  displayOptions,
   props: {
-    primaryToken, gasPerDataByte, gasMinLimit,
+    primaryToken, gasPerDataByte, minGasLimit,
     toValue, setToValue,
     balanceDec, gasCostDec, transferValueDec,
+    minValue, minValueString,
     cryptoValue, setCryptoValue,
     fiatValue, setFiatValue,
     dataValue, setDataValue,
+    valueError, setValueError,
     rate,
     gasLimitValue, setGasLimitValue, resetGasLimit,
     gasPriceValue, setGasPriceValue, resetGasPrice,
@@ -197,9 +203,9 @@ const PreviewForm: React.FunctionComponent<PreviewProps> = ({
 
   const updateDataValue = useCallback(v => {
     // copied from official elrond wallet ;)
-    setGasLimitValue(gasMinLimit + (gasPerDataByte * v.length))
+    setGasLimitValue(minGasLimit + (gasPerDataByte * v.length))
     setDataValue(v)
-  }, [ setGasLimitValue, setDataValue, gasMinLimit, gasPerDataByte ])
+  }, [ setGasLimitValue, setDataValue, minGasLimit, gasPerDataByte ])
 
   const useEntireBalance = useCallback(() => {
     if (balanceDec) {
@@ -213,11 +219,19 @@ const PreviewForm: React.FunctionComponent<PreviewProps> = ({
 
   // calculate total value
   useEffect(() => {
+    if (transferValueDec) {
+      if (minValue && transferValueDec.lt(minValue)) {
+        setValueError(`Must be atleast ${minValueString}`)
+      } else {
+        setValueError('')
+      }
+    }
+
     if (gasCostDec) {
-      setTotalGasValue(gasCostDec.toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED, symbolSuffix: true }))
+      setTotalGasValue(gasCostDec.toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED }))
 
       if (rate) {
-        setTotalGasCurrencyValue(gasCostDec.toCurrencyValueString(rate, { symbolPrefix: true }))
+        setTotalGasCurrencyValue(gasCostDec.toCurrencyValueString(rate, { showSymbol: true }))
       } else {
         setTotalGasCurrencyValue('')
       }
@@ -235,10 +249,10 @@ const PreviewForm: React.FunctionComponent<PreviewProps> = ({
         setTotalError('')
       }
 
-      setTotalValue(total.toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED, symbolSuffix: true }))
+      setTotalValue(total.toString({ numberStyle: AssetValueNumberStyle.RAW_SCALED, showSymbol: true }))
 
       if (rate) {
-        setTotalCurrencyValue(total.toCurrencyValueString(rate, { symbolPrefix: true }))
+        setTotalCurrencyValue(total.toCurrencyValueString(rate, { showSymbol: true }))
       } else {
         setTotalCurrencyValue('')
       }
@@ -247,15 +261,15 @@ const PreviewForm: React.FunctionComponent<PreviewProps> = ({
       setTotalError('')
       setTotalCurrencyValue('')
     }
-  }, [
-    balanceDec, gasCostDec, transferValueDec, rate,
-    setTotalGasValue, setTotalGasCurrencyValue,
-    setTotalValue, setTotalCurrencyValue,
-    setTotalError,
-  ])
+  }, [balanceDec, gasCostDec, transferValueDec, rate, setTotalGasValue, setTotalGasCurrencyValue, setTotalValue, setTotalCurrencyValue, setTotalError, minValue, setValueError, minValueString])
 
   const toValueError = useMemo(() => toValue && !isValidAddress(toValue), [toValue])
-  const allValid = useMemo(() => (!totalError) && isValidAddress(toValue), [totalError, toValue])
+
+  const allValid = useMemo(() => {
+    return (!totalError) && (!valueError) && isValidAddress(toValue)
+  }, 
+    [totalError, valueError, toValue]
+  )
 
   return (
     <Container className={className}>
@@ -263,38 +277,41 @@ const PreviewForm: React.FunctionComponent<PreviewProps> = ({
         <Label>To</Label>
         <StyledTextInput value={toValue} onChange={setToValue} placeholder='erd...' error={toValueError} />
       </Group>
-      <Group>
-        <Label>
-          <span>
-            Amount
+      {displayOptions?.excludeAmount ? null : (
+        <Group>
+          <Label>
+            <span>
+              Amount
             {balanceAsString ? (
-              <BalanceValue onClick={useEntireBalance}>(Balance: {balanceAsString})</BalanceValue>
+                <BalanceValue onClick={useEntireBalance}>(Balance: {balanceAsString})</BalanceValue>
+              ) : null}
+            </span>            
+          </Label>
+          <Col>
+            <CryptoLine>
+              <StyledTextInput value={cryptoValue} onChange={updateCryptoValue} type='number' />
+              <span>{Data.getToken(primaryToken).symbol}</span>
+            </CryptoLine>
+            {rate ? (
+              <FiatLine>
+                <StyledTextInput value={fiatValue} onChange={updateFiatValue} type='number' />
+                <span>USD</span>
+              </FiatLine>
             ) : null}
-          </span>
-        </Label>
-        <Col>
-          <CryptoLine>
-            <StyledTextInput value={cryptoValue} onChange={updateCryptoValue} type='number' />
-            <span>{Data.getToken(primaryToken).symbol}</span>
-          </CryptoLine>
-          {rate ? (
-            <FiatLine>
-              <StyledTextInput value={fiatValue} onChange={updateFiatValue} type='number' />
-              <span>USD</span>
-            </FiatLine>
-          ) : null}
-        </Col>
-      </Group>
+          </Col>
+          {valueError ? <ValueError>{valueError}</ValueError> : null}
+        </Group>
+      )}
       {(showDataInput || dataValue) ? (
         <Group>
           <Label>Data:</Label>
           <TextArea value={dataValue} onChange={updateDataValue} />
         </Group>
       ) : (
-          <Group>
-            <AddDataButton icon='plus' onClick={setShowDataInput}>Add data</AddDataButton>
-          </Group>
-        )}
+        <Group>
+          <AddDataButton icon='plus' onClick={setShowDataInput}>Add data</AddDataButton>
+        </Group>
+      )}
       <Group>
         <Label>Transaction fee:</Label>
         <GasCol>

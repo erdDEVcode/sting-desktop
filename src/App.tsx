@@ -8,7 +8,9 @@ import {
   GlobalProvider,
   GlobalConsumer,
   GlobalContextValue,
-  AccountProvider
+  WalletProvider,
+  ChainProvider,
+  NotificationsProvider
 } from './contexts'
 
 import Dashboard from './dashboard'
@@ -19,16 +21,20 @@ require('./utils/ipc')
 const Bootstrap: React.FunctionComponent = () => {
   return (
     <GlobalConsumer>
-      {({ theme = {}, activeAccount, network }: GlobalContextValue) => (
-        <AccountProvider activeAccount={activeAccount} network={network}>
+      {({ theme = {}, activeWallet, network }: GlobalContextValue) => (
+        <WalletProvider activeWallet={activeWallet} network={network}>
           <ThemeProvider theme={theme}>
             <GlobalStyles />
             <Layout>
-              <Dashboard />
-              <UpdateChecker />
+              <NotificationsProvider>
+                <ChainProvider network={network}>
+                  <Dashboard />
+                  <UpdateChecker />
+                </ChainProvider>
+              </NotificationsProvider>
             </Layout>
           </ThemeProvider>
-        </AccountProvider>
+        </WalletProvider>
       )}
     </GlobalConsumer>
   )

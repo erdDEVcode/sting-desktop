@@ -2,12 +2,12 @@ import React from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
-import { Network, Account, TransactionsResult } from '../../types/all'
+import { Network, Wallet, TransactionsResult } from '../../types/all'
 import {
   GlobalConsumer,
   GlobalContextValue,
-  AccountConsumer,
-  AccountContextValue,
+  WalletConsumer,
+  WalletContextValue,
 } from '../../contexts'
 import LoadingIcon from '../LoadingIcon'
 import TransactionList from './TransactionList'
@@ -26,21 +26,21 @@ const TransactionListLoadingIcon = styled(LoadingIcon)`
 `
 
 interface DataProps {
-  account: Account,
+  wallet: Wallet,
   network: Network,
   transactionsResult?: TransactionsResult,
   fetchTransactions: () => Promise<any>,
 }
 
 const OverviewData: React.FunctionComponent<DataProps> = props => {
-  const { transactionsResult, account, network } = props
+  const { transactionsResult, wallet, network } = props
 
   return (
     <Container>
       {transactionsResult
         ? <TransactionList
             network={network}
-            account={account}
+            wallet={wallet}
             data={transactionsResult}
           />
         : <TransactionListLoadingIcon />
@@ -61,17 +61,17 @@ const Overview: React.FunctionComponent<Props> = ({ isActive }) => {
   return (
     <GlobalConsumer>
       {({ network }: GlobalContextValue) => (
-        <AccountConsumer>
-          {(props: AccountContextValue) => (
-            props.account ? (
+        <WalletConsumer>
+          {(props: WalletContextValue) => (
+            props.wallet ? (
               <OverviewData
                 {...props}
                 network={network!}
-                account={props.account!}
+                wallet={props.wallet!}
               />
             ) : <LoadingIcon />
           )}
-        </AccountConsumer>
+        </WalletConsumer>
       )}
     </GlobalConsumer>
   )

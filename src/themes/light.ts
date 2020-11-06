@@ -17,10 +17,12 @@ import {
   green,
   yellow,
   transparent,
+  pastelGreen,
 } from './colors'
 
 const bgColor = gunMetal
 const textColor = white//primary1
+const lightYellow = new Color(middleYellow).lighten(0.6).toString()
 
 export default (): any => ({
   layout: {
@@ -60,7 +62,7 @@ export default (): any => ({
   },
   infoBox: {
     borderColor: middleYellow,
-    bgColor: new Color(middleYellow).lighten(0.6).toString(),
+    bgColor: lightYellow,
     textColor: black,
   },
   errorBox: {
@@ -74,6 +76,25 @@ export default (): any => ({
       borderBottomColor: white,
     },
   },
+  toast: {
+    error: {
+      bgColor: red,
+      textColor: white,
+      iconColor: yellow,
+    },
+    trackTransaction: {
+      pending: {
+        bgColor: lightYellow,
+        textColor: black,
+        iconColor: yellow,
+      },
+      success: {
+        bgColor: pastelGreen,
+        textColor: black,
+        iconColor: green,
+      },
+    },
+  },  
   headerClickable: {
     textColor: white,
     bgColor: transparent,
@@ -106,7 +127,7 @@ export default (): any => ({
       color: paleCerulean,
     },
   },
-  accountState: {
+  walletState: {
     icon: {
       color: paleCerulean,
     },
@@ -169,11 +190,24 @@ export default (): any => ({
     totalContainer: {
       bgColor: lightCyan,
     },
-    balanceContainer: {
-      bgColor: lighterGrey,
+    tableContainer: {
+      heading: {
+        borderColor: darkGrey,
+      },
+      table: {
+        borderColor: lighterGrey,
+        header: {
+          textColor: grey,
+        }
+      },
     },
     balanceRate: {
       textColor: gunMetal,
+    },
+    actionBox: {
+      metaText: {
+        color: grey,
+      },
     },
   },
   transactionItem: {

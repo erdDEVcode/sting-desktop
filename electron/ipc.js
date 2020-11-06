@@ -82,14 +82,14 @@ class BackendIpc {
         return _try(async () => {
           const { tx } = params
 
-          return _withLedger(async ledgerAccount => {
+          return _withLedger(async ledgerWallet => {
             log.debug('Signing transaction ...')
 
             const rawTx = Buffer.from(tx, 'base64')
 
             return {
               data: {
-                signedTransaction: await ledgerAccount.signTransaction(rawTx)
+                signedTransaction: await ledgerWallet.signTransaction(rawTx)
               }
             }
           })
@@ -108,15 +108,15 @@ class BackendIpc {
         })
       }
 
-      case BACKEND_TASKS.LEDGER_GET_ACCOUNT: {
+      case BACKEND_TASKS.LEDGER_GET_WALLET: {
         log.info(`Task: Get Ledger account`)
 
         return _try(async () => {
-          return _withLedger(async ledgerAccount => {
+          return _withLedger(async ledgerWallet => {
             log.debug('Fetching Elrond account info ...')
 
             return {
-              data: await ledgerAccount.getAddress()
+              data: await ledgerWallet.getAddress()
             }
           })          
         })

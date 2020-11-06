@@ -1,5 +1,4 @@
-import { Transaction, SignedTransaction } from './transaction'
-import { NetworkConfig } from './network'
+import { TransactionOnChain, SignedTransaction, NetworkConfig, ContractQueryParams, ContractQueryResult } from 'erdor'
 
 export interface AddressResult {
   address: string,
@@ -16,7 +15,7 @@ export interface DelegationResult {
 }
 
 export interface TransactionsResult {
-  transactions: Transaction[],
+  transactions: TransactionOnChain[],
   offset: number,
   limit: number,
   count: number,
@@ -33,9 +32,8 @@ export interface NetworkProxyApi {
   assertConnected: () => Promise<void>,
   getAddress: (address: string) => Promise<AddressResult>,
   getDelegation: (address: string) => Promise<DelegationResult>,
-  getVMValue: (contractAddress: string, funcName: string, funcArgs: string[], valueType: VMValueType) => Promise<any>,
+  queryContract: (params: ContractQueryParams) => Promise<ContractQueryResult>,
   getTransactions: (address: string, offset: number = 0, limit: number = 50) => Promise<TransactionsResult>,
-  sendTransaction: (signedTx: SignedTransaction) => Promise<string>,
-  simulateTransaction: (signedTx: SignedTransaction) => Promise<any>,
+  sendSignedTransaction: (signedTx: SignedTransaction) => Promise<TransactionReceipt>,
   getTransaction: (txHash: string) => Promise<Transaction>,
 }

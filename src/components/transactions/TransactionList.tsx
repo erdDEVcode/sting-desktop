@@ -3,7 +3,7 @@ import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
 import { PROTOCOL } from '../../common/constants/app'
-import { Network, Account, TransactionsResult, Transaction } from '../../types/all'
+import { Network, Wallet, TransactionsResult, TransactionOnChain } from '../../types/all'
 import Icon from '../Icon'
 import TokenValueStatic from '../TokenValueStatic'
 import TransactionDetails from './TransactionDetails'
@@ -113,29 +113,29 @@ const FailedBox = styled(ErrorBox)`
 
 interface ItemProps {
   network: Network,
-  account: Account,
-  tx: Transaction
+  wallet: Wallet,
+  tx: TransactionOnChain,
 }
 
-const Item: React.FunctionComponent<ItemProps> = ({ tx, account, network }) => {
+const Item: React.FunctionComponent<ItemProps> = ({ tx, wallet, network }) => {
   const [ expanded, setExpanded ] = useState(false)
-  const { id, receiver, sender, status, timestamp, value } = tx
+  const { signature: id, receiver, sender, status, timestamp, value } = tx
 
   const primaryToken = useMemo(() => network.endpoint.primaryToken, [network])
 
   const when = useMemo(() => timeAgo(timestamp), [ timestamp ])
 
-  const accountAddress = useMemo(() => {
-    return account.address()
-  }, [ account ])
+  const walletAddress = useMemo(() => {
+    return wallet.address()
+  }, [ wallet ])
 
   const isStakePayment = useMemo(() => (
-    `${sender}` === `${PROTOCOL.META_SHARD_ID}` && receiver === accountAddress
-  ), [sender, receiver, accountAddress ])
+    `${sender}` === `${PROTOCOL.META_SHARD_ID}` && receiver === walletAddress
+  ), [sender, receiver, walletAddress ])
 
   const isOutbound = useMemo(() => (
-    sender === account.address()
-  ), [ sender, account ])
+    sender === wallet.address()
+  ), [ sender, wallet ])
 
   const isContractCall = useMemo(() => false/*isOutbound && !!data*/, [/*data, isOutbound*/])
 
@@ -242,21 +242,21 @@ const Item: React.FunctionComponent<ItemProps> = ({ tx, account, network }) => {
 
 interface TransactionListProps {
   className?: string,
-  account: Account,
+  wallet: Wallet,
   network: Network,
   data: TransactionsResult,
 }
 
-const TransactionList: React.FunctionComponent<TransactionListProps> = ({ className, data, account, network }) => {
+const TransactionList: React.FunctionComponent<TransactionListProps> = ({ className, data, wallet, network }) => {
   return (
     <Container className={className}>
       {data.transactions.length ? (
         <React.Fragment>
           {data.transactions.map(tx => (
-            <Item key={tx.id} tx={tx} account={account} network={network} />
+            <Item key={tx.signature} tx={tx} wallet={wallet} network={network} />
           ))}
           <LastItemContainer>
-            <ViewAddressInExplorer address={account.address()}>
+            <ViewAddressInExplorer address={wallet.address()}>
               {({ onClick }: ViewInExplorerContext) => (
                 <Button onClick={onClick} icon='open-external'>View all transactions</Button>
               )}

@@ -3,11 +3,11 @@ import React, { useCallback, useState, useEffect } from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
-import ResolvedAccount from './ResolvedAccount'
+import ResolvedWallet from './ResolvedWallet'
 import Button from '../Button'
 import IconButton from '../IconButton'
 import TextInput from '../TextInput'
-import { generateMnemonic, deriveAccountFromMnemonic } from '../../utils/erdWallet'
+import { generateMnemonic, deriveWalletFromMnemonic } from '../../utils/erdWallet'
 
 const Container = styled.div`
   ${flex({ direction: 'column', justify: 'center', align: 'center' })}
@@ -30,7 +30,7 @@ const RefreshButton = styled(IconButton)`
   right: 0.5rem;
 `
 
-const StyledResolvedAccount = styled(ResolvedAccount)`
+const StyledResolvedWallet = styled(ResolvedWallet)`
   margin-top: 2rem;
   max-width: 400px;
 `
@@ -75,7 +75,7 @@ const istr = (n: number): string => {
 const CreatePassphrase: React.FunctionComponent<Props> = ({ renderSuccess }) => {
   const [words, setWords] = useState<string[]>([])
   const [testMode, setTestMode] = useState<number[]>([])
-  const [account, setAccount] = useState<any>()
+  const [wallet, setWallet] = useState<any>()
   const [mnemonic, setMnemonic] = useState<string[]>(generateMnemonic())
 
   const generate = useCallback(() => {
@@ -113,15 +113,15 @@ const CreatePassphrase: React.FunctionComponent<Props> = ({ renderSuccess }) => 
         }
 
         if (allOk) {
-          const account = deriveAccountFromMnemonic(mnemonic.join(' '))
+          const account = deriveWalletFromMnemonic(mnemonic.join(' '))
           if (account) {
-            setAccount(account)
+            setWallet(account)
             return
           }
         }
       }
 
-      setAccount(undefined)
+      setWallet(undefined)
     }, 250)
 
     return () => clearTimeout(timer)
@@ -145,7 +145,7 @@ const CreatePassphrase: React.FunctionComponent<Props> = ({ renderSuccess }) => 
               <WordInput key={i} onChange={v => onChangeWord(i, v)} placeholder={`${istr(testMode[i])} word...`} />
             ))}
           </Words>
-          {account ? null : (
+          {wallet ? null : (
             <TryAgainButton onClick={tryAgain} icon='undo'>Try again</TryAgainButton>
           )}
         </React.Fragment>
@@ -158,8 +158,8 @@ const CreatePassphrase: React.FunctionComponent<Props> = ({ renderSuccess }) => 
           <TestButton onClick={testUser}>I have written this down offline</TestButton>
         </React.Fragment>
       )}
-      <StyledResolvedAccount account={account} />
-      {account ? renderSuccess(account) : null}
+      <StyledResolvedWallet wallet={wallet} />
+      {wallet ? renderSuccess(wallet) : null}
     </Container>
   )
 }

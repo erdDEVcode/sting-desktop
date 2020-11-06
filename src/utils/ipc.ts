@@ -90,14 +90,14 @@ export const isLedgerSupported = (): Promise<LedgerIsSupportedResponse> => {
   return (ipc.send(BACKEND_TASKS.LEDGER_IS_SUPPORTED) as Promise<LedgerIsSupportedResponse>)
 }
 
-interface LedgerGetAccountResponse extends Base {
+interface LedgerGetWalletResponse extends Base {
   data?: {
     address: string,
   },
 }
 
-export const getLedgerAccount = (): Promise<LedgerGetAccountResponse> => {
-  return (ipc.send(BACKEND_TASKS.LEDGER_GET_ACCOUNT) as Promise<LedgerGetAccountResponse>)
+export const getLedgerWallet = (): Promise<LedgerGetWalletResponse> => {
+  return (ipc.send(BACKEND_TASKS.LEDGER_GET_WALLET) as Promise<LedgerGetWalletResponse>)
 }
 
 interface LedgerSignTransactionResponse extends Base {

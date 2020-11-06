@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react'
 
 import { doInterval } from '../utils/timer'
-import { Account, Network, Delegation } from '../types/all'
+import { Wallet, Network, Delegation } from '../types/all'
 
 interface UseDelegationsResult {
   delegation?: Delegation,
 }
 
-export const useDelegations = (account?: Account, network?: Network): UseDelegationsResult => {
+export const useDelegations = (wallet?: Wallet, network?: Network): UseDelegationsResult => {
   const [delegation, setDelegation] = useState<Delegation | undefined>()
 
   useEffect(() => {
     const timer = doInterval(async () => {
-      if (account && network?.connection && !(network.failure)) {
+      if (wallet && network?.connection && !(network.failure)) {
         if (!network?.endpoint.delegations) {
           setDelegation(undefined)
         } else {
-          const address = account.address()
+          const address = wallet.address()
           
           try {
             const ret = await network.connection.getDelegation(address)
@@ -34,7 +34,7 @@ export const useDelegations = (account?: Account, network?: Network): UseDelegat
     }, { delayMs: 5000, executeImmediately: true })
 
     return () => clearInterval(timer)
-  }, [account, network])
+  }, [wallet, network])
 
   return { delegation }
 }

@@ -1,4 +1,5 @@
-import { Account, Network, Storage } from '../../types/all'
+import _ from '../../utils/lodash'
+import { Wallet, ContractQueryParams, Network, Transaction, SignedTransaction, Storage } from '../../types/all'
 import { ERD_PROVIDER_CALL, META_CALL } from '../../common/constants/ipcWebViewTasks'
 import { HandlerHelper } from './interfaces'
 
@@ -6,12 +7,12 @@ import { HandlerHelper } from './interfaces'
  * Handles calls for Dapp browser WebView calls.
  */
 export class WebViewCallHandler {
-  _account: Account
+  _wallet: Wallet
   _network: Network
   _storage: Storage
 
-  constructor(account: Account, network: Network, storage: Storage) {
-    this._account = account
+  constructor(wallet: Wallet, network: Network, storage: Storage) {
+    this._wallet = wallet
     this._network = network
     this._storage = storage
   }
@@ -42,25 +43,10 @@ export class WebViewCallHandler {
         }
 
         let isAllowed = await this._storage.isDappAllowed(dapp)
-        
-        if (isAllowed) {
-          return this._account.address()
-        } else {
-          return null
-        }
-      }
-      case 'requestAccountAccess': {
-        const dapp = helper.getDapp()
-        
-        if (!dapp) {
-          throw new Error('No dapp detected')
-        }
-
-        let isAllowed = await this._storage.isDappAllowed(dapp)
 
         // if not allowed then ask user for permission
         if (!isAllowed) {
-          isAllowed = await helper.askUserToAllowDappToSeeTheirAccountAddress(this._account.address())
+          isAllowed = await helper.askUserToAllowDappToSeeTheirWalletAddress(this._wallet.address())
 
           if (isAllowed) {
             await this._storage.allowDapp(dapp)
@@ -70,12 +56,20 @@ export class WebViewCallHandler {
         if (!isAllowed) {
           throw new Error('User disallowed access')
         }
-
-        break
+        
+        return this._wallet.address()
       }
       default:
         throw new Error(`Unrecognized method: ${method}`)
     }
+  }
+
+  _parseArg (args: any, name: string) {
+    const v = _.get(args, '0')
+    if (undefined === v) {
+      throw new Error(`Argument not found: ${name}`)
+    }
+    return v
   }
 
   async _executeErdProviderCall(helper: HandlerHelper, params: any) {
@@ -83,55 +77,40 @@ export class WebViewCallHandler {
 
     switch (method) {
       case 'getNetworkConfig': {
-        return this._network.connection.getRawConfig()
+        return this._network.connection.getNetworkConfig()
       }
       case 'getAccount': {
-        const { address } = args
+        const address: string = this._parseArg(args, 'address')
         return await this._network.connection.getAddress(address)
       }
-      case 'getBalance': {
-        const { address } = args
-        const ret = await this._network.connection.getAddress(address)
-        return ret.balance
+      case 'queryContract': {
+        const params: ContractQueryParams = this._parseArg(args, 'params')
+        return await this._network.connection.queryContract(params)
       }
-      case 'getNonce': {
-        const { address } = args
-        const ret = await this._network.connection.getAddress(address)
-        return ret.nonce
+      case 'signAndSendTransaction': {
+        const tx: Transaction = this._parseArg(args, 'tx')
+        
+        // remove meta since this is for Sting internal use only
+        delete tx.meta
+
+        return await helper.signAndSendTransaction(tx)
       }
-      case 'getVMValueString': {
-        const { contractAddress, funcName, funcArgs } = args
-        return await this._network.connection.getVMValue(contractAddress, funcName, funcArgs || [], 'string')
-      }
-      case 'getVMValueInt': {
-        const { contractAddress, funcName, funcArgs } = args
-        return await this._network.connection.getVMValue(contractAddress, funcName, funcArgs || [], 'int')
-      }
-      case 'getVMValueHex': {
-        const { contractAddress, funcName, funcArgs } = args
-        return await this._network.connection.getVMValue(contractAddress, funcName, funcArgs || [], 'hex')
-      }
-      case 'getVMValueQuery': {
-        const { contractAddress, funcName, funcArgs } = args
-        return await this._network.connection.getVMValue(contractAddress, funcName, funcArgs || [], 'query')
-      }
-      case 'sendTransaction': {
-        const { signedTx } = args
-        return await this._network.connection.sendTransaction(signedTx)
-      }
-      case 'simulateTransaction': {
-        const { signedTx } = args
-        return await this._network.connection.simulateTransaction(signedTx)
+      case 'sendSignedTransaction': {
+        const signedTx: SignedTransaction = this._parseArg(args, 'signedTx')
+        
+        // remove meta since this is for Sting internal use only
+        delete signedTx.meta
+
+        return await this._network.connection.sendSignedTransaction(signedTx)
       }
       case 'getTransaction': {
-        const { txHash } = args
+        const txHash: string = this._parseArg(args, 'txHash')
         const ret = await this._network.connection.getTransaction(txHash)
-        return ret ? ret.raw : null
-      }
-      case 'getTransactionStatus': {
-        const { txHash } = args
-        const ret = await this._network.connection.getTransaction(txHash)
-        return ret ? ret.raw.status : null
+        const raw = _.get(ret, 'raw')
+        if (!raw) {
+          throw new Error('Transaction not found')
+        }
+        return raw
       }
       default:
         throw new Error(`Unrecognized method: ${method}`)

@@ -1,7 +1,7 @@
 import Dexie from 'dexie'
 import React, { useCallback, useMemo } from 'react'
 
-import { Account, Dapp, Storage } from '../types/all'
+import { Wallet, Dapp, Storage } from '../types/all'
 import { sha3 } from '../utils/string'
 
 export interface StorageContextValue extends Storage {
@@ -18,17 +18,17 @@ const createDb = (name: string): Dexie => {
 }
 
 interface Props {
-  account?: Account,
+  wallet?: Wallet,
 }
 
-export const StorageProvider: React.FunctionComponent<Props> = ({ children, account }) => {
+export const StorageProvider: React.FunctionComponent<Props> = ({ children, wallet }) => {
   const db = useMemo(() => {
-    if (account) {
-      return createDb(sha3(account!.address()))
+    if (wallet) {
+      return createDb(sha3(wallet!.address()))
     } else {
       return null
     }
-  }, [ account ])
+  }, [ wallet ])
 
   const allowDapp = useCallback(async (dapp: Dapp) => {
     if (db) {

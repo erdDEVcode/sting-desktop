@@ -2,8 +2,8 @@ import React, { useCallback, useState, useEffect } from 'react'
 import styled from '@emotion/styled'
 import { flex } from 'emotion-styled-utils'
 
-import ResolvedAccount from './ResolvedAccount'
-import { getLedgerAccount, isLedgerSupported } from '../../utils/erdWallet'
+import ResolvedWallet from './ResolvedWallet'
+import { getLedgerWallet, isLedgerSupported } from '../../utils/erdWallet'
 import LoadingIcon from '../LoadingIcon'
 import Button from '../Button'
 import ErrorBox from '../ErrorBox'
@@ -22,7 +22,7 @@ const StyledError = styled(ErrorBox)`
   word-break: normal;
 `
 
-const StyledResolvedAccount = styled(ResolvedAccount)`
+const StyledResolvedWallet = styled(ResolvedWallet)`
   margin-top: 2rem;
   max-width: 400px;
 `
@@ -62,7 +62,7 @@ interface Props {
 }
 
 const OpenLedger: React.FunctionComponent<Props> = ({ renderSuccess }) => {
-  const [account, setAccount] = useState<any>()
+  const [wallet, setWallet] = useState<any>()
   const [supported, setSupported] = useState<boolean | undefined>()
   const [error, setError] = useState()
 
@@ -75,12 +75,12 @@ const OpenLedger: React.FunctionComponent<Props> = ({ renderSuccess }) => {
 
   const connect = useCallback(async () => {
     try {
-      const account = await getLedgerAccount()
-      setAccount(account)
+      const wallet = await getLedgerWallet()
+      setWallet(wallet)
     } catch (err) {
-      console.error(`Error fetching ledger account: ${err.message}`)
+      console.error(`Error fetching ledger wallet: ${err.message}`)
       setError(err)
-      setAccount(null)
+      setWallet(null)
     }
   }, [])
 
@@ -91,9 +91,9 @@ const OpenLedger: React.FunctionComponent<Props> = ({ renderSuccess }) => {
           <Content>
             <StyledLedgerSvg />
             <p>Connect your Ledger and open the Elrond app <InfoIcon icon='info' tooltip='You may need to enable "Developer Mode" on your Ledger to install the Elrond app.' /></p>
-            {account ? null : (
+            {wallet ? null : (
               <React.Fragment>
-                <ConnectButton onClick={connect}>Connect to account</ConnectButton>
+                <ConnectButton onClick={connect}>Connect to wallet</ConnectButton>
                 {error ? <StyledError error={error} /> : null}
               </React.Fragment>
             )}
@@ -105,8 +105,8 @@ const OpenLedger: React.FunctionComponent<Props> = ({ renderSuccess }) => {
           </Content>
         )
       )}
-      <StyledResolvedAccount account={account} />
-      {account ? renderSuccess(account) : null}
+      <StyledResolvedWallet wallet={wallet} />
+      {wallet ? renderSuccess(wallet) : null}
     </Container>
   )
 }

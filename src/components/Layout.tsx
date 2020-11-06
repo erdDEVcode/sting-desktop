@@ -6,7 +6,7 @@ import { headerHeight } from './units'
 import Data from '../data'
 import NetworkPanel from './NetworkPanel'
 import AddWalletModal from './AddWalletModal'
-import AccountStatus from './AccountStatus'
+import WalletStatus from './WalletStatus'
 import NetworkStatus from './NetworkStatus'
 import AboutModal from './AboutModal'
 import LogoSvg from './LogoSvg'
@@ -28,7 +28,7 @@ const Header = styled.div`
   -webkit-app-region: drag;
 `
 
-const StyledAccountStatus = styled(AccountStatus)`
+const StyledWalletStatus = styled(WalletStatus)`
   z-index: 10;
 `
 
@@ -156,7 +156,7 @@ const Layout: React.FunctionComponent = ({ children }) => {
         />
       </NetworkPanelOverlay>
       <Header>
-        <StyledAccountStatus addNewWallet={toggleShowAddWalletModal} />
+        <StyledWalletStatus addNewWallet={toggleShowAddWalletModal} />
         <StyledNetworkStatus togglePanel={togglePanel} />
       </Header>
       <Content>
