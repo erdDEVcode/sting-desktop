@@ -13,7 +13,6 @@ Features:
 * **Works on Windows, OS X and Linux** _(Sting is currently desktop-only)_.
 * Unified balance view (staking/delegation + wallet).
 * Send transactions, with full gas customization.
-* View detailed transaction history.
 * Import wallet via seed/mnemonic, JSON/PEM file, Ledger nano.
 * Switch between networks (currently supported: mainnet, testnet).
 
