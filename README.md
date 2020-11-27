@@ -1,11 +1,9 @@
-<p align="center">
-  <img width="250" height="250" src="https://raw.githubusercontent.com/erdDEVcode/sting/master/electron/images/logo.png">
-</p>
-
 # Sting
 
 [![Join our community](https://img.shields.io/badge/discord-join%20chat-738bd7.svg)](https://discord.gg/v9PDKRN)
 [![Follow on Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow&maxAge=2592000)](https://twitter.com/erd_dev)
+
+**NOTE: sting-desktop is no longer under development, and has been replaced by the [Sting web wallet](https://github.com/erdDEVcode/sting).**
 
 Cross-platform wallet for the [Elrond](https://elrond.com) blockchain.
 
