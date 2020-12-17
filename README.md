@@ -3,7 +3,7 @@
 [![Join our community](https://img.shields.io/badge/discord-join%20chat-738bd7.svg)](https://discord.gg/v9PDKRN)
 [![Follow on Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Follow&maxAge=2592000)](https://twitter.com/erd_dev)
 
-**NOTE: sting-desktop is no longer under development, and has been replaced by the [Sting web wallet](https://github.com/erdDEVcode/sting).**
+**PLEASE NOTE: The Sting desktop wallet is no longer under active development, and has been replaced by the [Sting web wallet](https://github.com/erdDEVcode/sting). Various elements of Sting have been split out into separate components, e.g. [erdbox](https://edbox.erd.dev). This repository is provided here just for reference sake.**
 
 Cross-platform wallet for the [Elrond](https://elrond.com) blockchain.
 
